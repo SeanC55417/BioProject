@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ADA 2026 Simplified Glucose-Lowering Recommender</title>
+  <link rel="stylesheet" href="drug_recommendation_app.css">
+</head>
+<body>
+  <main class="page-shell">
+    <section class="hero">
+      <div class="hero-grid">
+        <div>
+          <span class="eyebrow">ADA 2026 Simplified Translation</span>
+          <h2>Type 2 Diabetes Drug Recommender</h2>
+          <p>
+            Text here that still needs to be filled out
+          </p>
+        </div>
+        
+      </div>
+    </section>
+
+    <section class="tabs-shell">
+      <div class="tabs-bar" role="tablist" aria-label="Application sections">
+        <button class="tab-btn is-active" id="tab-button-intake" type="button" role="tab" aria-selected="true" aria-controls="tab-intake" data-tab-target="tab-intake">
+          1. Flowchart and Questions
+        </button>
+        <button class="tab-btn" id="tab-button-results" type="button" role="tab" aria-selected="false" aria-controls="tab-results" data-tab-target="tab-results">
+          2. Recommendations and Comparison
+        </button>
+      </div>
+
+      <section class="tab-panel is-active" id="tab-intake" role="tabpanel" aria-labelledby="tab-button-intake">
+        <div class="intake-grid">
+          <section class="panel flow-panel">
+            <div class="panel-heading">
+              <div>
+                <h2>Flowchart View</h2>
+                <p>The path below follows the user's actual answers. Answered branches stay lit, and the next question is centered automatically.</p>
+              </div>
+              <div class="toolbar">
+                <button class="ghost-btn" id="jump-to-results-top" type="button">Open recommendations</button>
+              </div>
+            </div>
+
+            <div class="flowchart-shell" id="flowchart-shell">
+              <div class="flowchart-viewport" id="flowchart-viewport">
+                <div class="flowchart-canvas" id="flowchart-canvas"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel form-panel">
+            <div class="panel-heading">
+              <div>
+                <h2>Guided Decision Tree</h2>
+                <p>Answer one prompt at a time. Each answer advances the intake path and updates the recommendation board in the background.</p>
+              </div>
+              <div class="toolbar">
+                <button class="ghost-btn" id="demo-btn" type="button">Load demo case</button>
+                <button class="ghost-btn" id="open-results-btn" type="button">See recommendation tab</button>
+                <button class="accent-btn" id="reset-btn" type="button">Reset to defaults</button>
+              </div>
+            </div>
+
+            <div class="wizard-shell">
+              <section class="wizard-progress-card">
+                <div class="wizard-progress-topline">
+                  <strong id="wizard-stage-label">Starting intake</strong>
+                  <span id="wizard-progress-copy">Answer the first question to begin narrowing the recommendation.</span>
+                </div>
+                <div class="wizard-progress-bar" aria-hidden="true">
+                  <span id="wizard-progress-fill"></span>
+                </div>
+                <div class="wizard-progress-stats">
+                  <span class="pill neutral" id="wizard-step-count">0 answered</span>
+                  <span class="pill neutral" id="wizard-path-count">0 decision points mapped</span>
+                </div>
+              </section>
+
+              <div class="question-scroll-shell" id="question-scroll-shell">
+                <div class="question-history-list" id="question-history-list"></div>
+
+                <section class="question-card" id="question-card">
+                  <div class="question-kicker" id="question-stage">Scope</div>
+                  <h3 id="question-title">Loading question...</h3>
+                  <p id="question-help">The wizard is preparing the next decision point.</p>
+                  <div class="question-input-area" id="question-input-area"></div>
+                  <div class="question-actions">
+                    <button class="ghost-btn" id="back-question-btn" type="button">Back</button>
+                    <button class="ghost-btn" id="review-results-btn" type="button">Review recommendations</button>
+                    <button class="accent-btn" id="advance-question-btn" type="button">Continue</button>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="tab-results" role="tabpanel" aria-labelledby="tab-button-results" hidden>
+        <section class="panel results-panel" aria-live="polite">
+          <div class="panel-heading">
+            <div>
+              <h2>Recommendation Board</h2>
+              <p>Class-level ranking is shown first, then example drugs from the medication catalog.</p>
+            </div>
+            <div class="toolbar">
+              <button class="ghost-btn" id="back-to-questions-btn" type="button">Back to questions</button>
+            </div>
+          </div>
+
+          <div class="summary-strip" id="summary-strip">
+            <div class="mini-stat">
+              <strong>Preferred</strong>
+              <span id="preferred-count">0</span>
+            </div>
+            <div class="mini-stat">
+              <strong>Acceptable</strong>
+              <span id="acceptable-count">0</span>
+            </div>
+            <div class="mini-stat">
+              <strong>Avoid</strong>
+              <span id="avoid-count">0</span>
+            </div>
+          </div>
+
+          <div class="status-banner" id="status-banner" data-tone="ok">
+            <strong>Ready</strong>
+            <p>Enter a type 2 diabetes profile to generate recommendations.</p>
+          </div>
+
+          <div class="stack-board">
+            <section class="lane preferred">
+              <div class="lane-head">
+                <div class="lane-title"><span class="lane-swatch"></span><span>Preferred</span></div>
+                <div class="lane-note">Higher-priority classes based on the simplified algorithm.</div>
+              </div>
+              <div class="recommendation-grid" id="preferred-grid"></div>
+            </section>
+
+            <section class="lane acceptable">
+              <div class="lane-head">
+                <div class="lane-title"><span class="lane-swatch"></span><span>Acceptable</span></div>
+                <div class="lane-note">Reasonable alternatives or second-line options to consider.</div>
+              </div>
+              <div class="recommendation-grid" id="acceptable-grid"></div>
+            </section>
+
+            <section class="lane avoid">
+              <div class="lane-head">
+                <div class="lane-title"><span class="lane-swatch"></span><span>Avoid</span></div>
+                <div class="lane-note">Centralized exclusions and profile conflicts from the simplified rule set.</div>
+              </div>
+              <div class="recommendation-grid" id="avoid-grid"></div>
+            </section>
+          </div>
+
+          <div class="insight-grid">
+            <section class="insight-card">
+              <h3>Why the algorithm landed here</h3>
+              <p>These rationale tags are pulled directly from the decision branches that fired.</p>
+              <div class="rationale-row" id="rationale-row"></div>
+            </section>
+            <section class="insight-card">
+              <h3>Derived flags</h3>
+              <p>Quick reads of the patient profile that steer major branches like CKD, cardiorenal disease, and severe hyperglycemia.</p>
+              <div class="flag-row" id="flag-row"></div>
+            </section>
+          </div>
+
+          <section class="compare-shell">
+            <div class="compare-header">
+              <div>
+                <h3>Drug comparison</h3>
+                <p>Pick any catalog drugs to compare route, cost, weight effect, hypoglycemia risk, cautions, and profile conflicts.</p>
+              </div>
+              <div class="legend">
+                <span class="pill preferred">Preferred lane</span>
+                <span class="pill acceptable">Acceptable lane</span>
+                <span class="pill avoid">Avoid lane</span>
+                <span class="pill neutral">Not currently ranked</span>
+              </div>
+            </div>
+
+            <div class="compare-controls">
+              <div class="compare-slot">
+                <label for="compare-left">Left drug</label>
+                <select class="compare-select" id="compare-left"></select>
+              </div>
+              <div class="vs-badge">VS</div>
+              <div class="compare-slot">
+                <label for="compare-right">Right drug</label>
+                <select class="compare-select" id="compare-right"></select>
+              </div>
+            </div>
+
+            <div class="compare-grid">
+              <article class="drug-card" id="compare-left-card"></article>
+              <article class="drug-card" id="compare-right-card"></article>
+            </div>
+          </section>
+
+          <div class="footer-note">
+            The class ranking follows your simplified pseudocode rather than the full ADA chapter text. Drug cards are illustrative
+            examples from the medication catalog and do not replace product labeling, dosing review, or shared decision-making.
+          </div>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="drug_recommendation_app.js"></script>
+</body>
+</html>

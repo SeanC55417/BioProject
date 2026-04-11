@@ -1,0 +1,1697 @@
+    :root {
+      --bg-1: #f6f2e8;
+      --bg-2: #ecf5ef;
+      --panel: rgba(255, 255, 255, 0.84);
+      --panel-strong: rgba(255, 255, 255, 0.96);
+      --ink: #203031;
+      --muted: #617376;
+      --line: rgba(32, 48, 49, 0.1);
+      --shadow: 0 18px 50px rgba(28, 39, 40, 0.1);
+      --preferred: #1d9b52;
+      --preferred-soft: rgba(29, 155, 82, 0.12);
+      --acceptable: #e3b406;
+      --acceptable-soft: rgba(227, 180, 6, 0.14);
+      --avoid: #e04a45;
+      --avoid-soft: rgba(224, 74, 69, 0.12);
+      --focus: #2784ee;
+      --hero: #70aff6;
+      --radius: 24px;
+      --radius-sm: 16px;
+      --flow-pane-height: clamp(24rem, calc(100dvh - 19rem), 44rem);
+      --question-pane-height: clamp(18rem, calc(100dvh - 26rem), 31rem);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: var(--ink);
+      font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      background:
+        radial-gradient(circle at top left, rgba(16, 91, 78, 0.08), transparent 28%),
+        radial-gradient(circle at 88% 12%, rgba(227, 180, 6, 0.13), transparent 20%),
+        linear-gradient(180deg, var(--bg-1), var(--bg-2));
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: auto;
+      pointer-events: none;
+      border-radius: 999px;
+      filter: blur(12px);
+      opacity: 0.55;
+    }
+
+    body::before {
+      width: 220px;
+      height: 220px;
+      top: 6rem;
+      right: -4rem;
+      background: rgba(15, 124, 130, 0.1);
+    }
+
+    body::after {
+      width: 180px;
+      height: 180px;
+      left: -2rem;
+      bottom: 6rem;
+      background: rgba(227, 180, 6, 0.12);
+    }
+
+    .page-shell {
+      width: min(1460px, calc(100% - 1.5rem));
+      margin: 0.75rem auto 1rem;
+      display: grid;
+      gap: 0.9rem;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 1.1rem 1.25rem;
+      border-radius: 28px;
+      background: var(--hero);
+      color: #fffef8;
+      box-shadow: var(--shadow);
+      animation: rise-in 480ms ease-out both;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -6rem -6rem auto;
+      width: 260px;
+      height: 260px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      transform: rotate(16deg);
+    }
+
+    .hero-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: minmax(0, 1.7fr) minmax(300px, 0.9fr);
+      align-items: start;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.16);
+      font-family: "Avenir Next", "Trebuchet MS", "Gill Sans", sans-serif;
+      font-size: 0.84rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0.85rem 0 0.55rem;
+      font-family: "Avenir Next Condensed", "Avenir Next", "Gill Sans", sans-serif;
+      font-size: clamp(2rem, 4vw, 3.3rem);
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 72ch;
+      color: rgba(255, 254, 248, 0.88);
+      font-size: 1.04rem;
+      line-height: 1.55;
+    }
+
+    .hero-card {
+      padding: 1.1rem 1.15rem;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      backdrop-filter: blur(8px);
+    }
+
+    .hero-card strong,
+    .hero-card span {
+      display: block;
+    }
+
+    .hero-card strong {
+      margin-bottom: 0.45rem;
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 0.92rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .hero-card span {
+      line-height: 1.55;
+      color: rgba(255, 254, 248, 0.9);
+      font-size: 0.97rem;
+    }
+
+    .app-grid {
+      display: grid;
+      gap: 1.2rem;
+      grid-template-columns: minmax(340px, 0.88fr) minmax(420px, 1.12fr);
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow);
+      animation: rise-in 520ms ease-out both;
+    }
+
+    .panel.form-panel {
+      padding: 0.95rem;
+    }
+
+    .panel.results-panel {
+      position: sticky;
+      top: 1rem;
+      padding: 1rem;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .panel-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 0.85rem;
+      padding: 0.1rem 0.1rem 0.45rem;
+    }
+
+    .panel-heading h2,
+    .panel-heading h3 {
+      margin: 0;
+      font-family: "Avenir Next Condensed", "Avenir Next", sans-serif;
+      letter-spacing: -0.02em;
+    }
+
+    .panel-heading h2 {
+      font-size: 1.45rem;
+    }
+
+    .panel-heading p {
+      margin: 0.3rem 0 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+    }
+
+    button,
+    select,
+    input {
+      font: inherit;
+    }
+
+    .ghost-btn,
+    .accent-btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 0.72rem 1rem;
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 0.92rem;
+      cursor: pointer;
+      transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    }
+
+    .ghost-btn:hover,
+    .accent-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .ghost-btn {
+      background: rgba(15, 124, 130, 0.08);
+      color: var(--focus);
+    }
+
+    .accent-btn {
+      background: var(--ink);
+      color: #fff;
+      box-shadow: 0 10px 24px rgba(32, 48, 49, 0.18);
+    }
+
+    .form-sections {
+      display: grid;
+      gap: 0.85rem;
+    }
+
+    .form-section {
+      overflow: hidden;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.68);
+    }
+
+    .form-section summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 1rem 1rem 0.95rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 0.8rem;
+    }
+
+    .form-section summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .section-copy strong {
+      display: block;
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 1rem;
+    }
+
+    .section-copy span {
+      display: block;
+      margin-top: 0.18rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    .chevron {
+      width: 2.1rem;
+      height: 2.1rem;
+      flex: 0 0 auto;
+      border-radius: 999px;
+      background: rgba(15, 124, 130, 0.08);
+      display: grid;
+      place-items: center;
+      color: var(--focus);
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      transition: transform 180ms ease;
+    }
+
+    .form-section[open] .chevron {
+      transform: rotate(180deg);
+    }
+
+    .fields-grid {
+      display: grid;
+      gap: 0.9rem;
+      padding: 0 1rem 1rem;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .field-card,
+    .toggle-card {
+      min-width: 0;
+      border-radius: 18px;
+      background: var(--panel-strong);
+      border: 1px solid rgba(32, 48, 49, 0.08);
+      transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .field-card:focus-within,
+    .toggle-card:focus-within {
+      border-color: rgba(15, 124, 130, 0.42);
+      box-shadow: 0 0 0 4px rgba(15, 124, 130, 0.11);
+      transform: translateY(-1px);
+    }
+
+    .field-card {
+      padding: 0.85rem 0.9rem 0.9rem;
+      display: grid;
+      gap: 0.35rem;
+    }
+
+    .field-card.full-width,
+    .toggle-card.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .field-card label,
+    .toggle-label strong {
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+
+    .field-card small,
+    .toggle-label span {
+      color: var(--muted);
+      line-height: 1.4;
+      font-size: 0.84rem;
+    }
+
+    .field-card input,
+    .field-card select,
+    .compare-select {
+      width: 100%;
+      margin-top: 0.3rem;
+      border: 1px solid rgba(32, 48, 49, 0.12);
+      border-radius: 14px;
+      padding: 0.8rem 0.9rem;
+      background: #fff;
+      color: var(--ink);
+      outline: none;
+    }
+
+    .toggle-card {
+      padding: 0.8rem 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.85rem;
+    }
+
+    .toggle-label {
+      display: grid;
+      gap: 0.2rem;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 3.4rem;
+      height: 2rem;
+      flex: 0 0 auto;
+    }
+
+    .toggle-switch input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
+      background: rgba(32, 48, 49, 0.15);
+      transition: background 180ms ease;
+    }
+
+    .toggle-slider::after {
+      content: "";
+      position: absolute;
+      width: 1.46rem;
+      height: 1.46rem;
+      top: 0.27rem;
+      left: 0.27rem;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.16);
+      transition: transform 180ms ease;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: linear-gradient(135deg, #0f3f82, #1d799b);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::after {
+      transform: translateX(1.4rem);
+    }
+
+    .toggle-card.is-disabled,
+    .field-card.is-disabled {
+      opacity: 0.52;
+    }
+
+    .summary-strip {
+      display: grid;
+      gap: 0.75rem;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .mini-stat {
+      border-radius: 18px;
+      padding: 0.95rem 1rem;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(32, 48, 49, 0.08);
+    }
+
+    .mini-stat strong,
+    .mini-stat span {
+      display: block;
+    }
+
+    .mini-stat strong {
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 0.82rem;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .mini-stat span {
+      margin-top: 0.28rem;
+      font-family: "Avenir Next Condensed", "Avenir Next", sans-serif;
+      font-size: 1.65rem;
+      letter-spacing: -0.03em;
+    }
+
+    .status-banner {
+      border-radius: 22px;
+      padding: 1rem 1.05rem;
+      background: rgba(15, 124, 130, 0.08);
+      border: 1px solid rgba(15, 124, 130, 0.18);
+    }
+
+    .status-banner[data-tone="ok"] {
+      background: rgba(29, 155, 82, 0.09);
+      border-color: rgba(29, 155, 82, 0.2);
+    }
+
+    .status-banner[data-tone="warning"] {
+      background: rgba(227, 180, 6, 0.12);
+      border-color: rgba(227, 180, 6, 0.2);
+    }
+
+    .status-banner[data-tone="danger"] {
+      background: rgba(224, 74, 69, 0.1);
+      border-color: rgba(224, 74, 69, 0.2);
+    }
+
+    .status-banner strong {
+      display: block;
+      margin-bottom: 0.25rem;
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 0.95rem;
+    }
+
+    .status-banner p {
+      margin: 0;
+      line-height: 1.5;
+      color: var(--ink);
+    }
+
+    .stack-board {
+      display: grid;
+      gap: 0.7rem;
+    }
+
+    .lane {
+      border-radius: 22px;
+      padding: 1rem;
+      border: 1px solid rgba(32, 48, 49, 0.08);
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .lane.preferred {
+      background:
+        #22b14c;
+    }
+
+    .lane.acceptable {
+      background:
+        #fff200;
+    }
+
+    .lane.avoid {
+      background:
+        #ed1c24;
+    }
+
+    .lane-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.75rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .lane-title {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-family: "Avenir Next Condensed", "Avenir Next", sans-serif;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+    }
+
+    .lane-swatch {
+      width: 0.95rem;
+      height: 2.3rem;
+      border-radius: 999px;
+    }
+
+    .lane.preferred .lane-swatch {
+      background: var(--preferred);
+    }
+
+    .lane.acceptable .lane-swatch {
+      background: var(--acceptable);
+    }
+
+    .lane.avoid .lane-swatch {
+      background: var(--avoid);
+    }
+
+    .lane-note {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .recommendation-grid {
+      display: grid;
+      gap: 0.6rem;
+      grid-template-columns: 1fr;
+    }
+
+    .class-card {
+      padding: 0.95rem;
+      border-radius: 18px;
+      border: 1px solid rgba(32, 48, 49, 0.08);
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 12px 24px rgba(32, 48, 49, 0.05);
+      animation: card-in 360ms ease-out both;
+    }
+
+    .class-card header {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      align-items: start;
+    }
+
+    .class-card h4 {
+      margin: 0;
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 1rem;
+    }
+
+    .class-card p {
+      margin: 0.32rem 0 0;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 0.9rem;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.65rem;
+      border-radius: 999px;
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+
+    .pill.preferred {
+      background: var(--preferred-soft);
+      color: #0d6f39;
+    }
+
+    .pill.acceptable {
+      background: var(--acceptable-soft);
+      color: #856300;
+    }
+
+    .pill.avoid {
+      background: var(--avoid-soft);
+      color: #a22d28;
+    }
+
+    .pill.neutral {
+      background: rgba(15, 124, 130, 0.08);
+      color: var(--focus);
+    }
+
+    .class-meta,
+    .chip-row,
+    .rationale-row,
+    .flag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+
+    .class-meta {
+      margin-top: 0.8rem;
+    }
+
+    .class-list {
+      margin: 0.85rem 0 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 0.45rem;
+    }
+
+    .class-list li {
+      padding: 0.55rem 0.65rem;
+      border-radius: 14px;
+      background: rgba(32, 48, 49, 0.04);
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+
+    .class-list small {
+      color: var(--muted);
+    }
+
+    .empty-state {
+      padding: 1rem;
+      border-radius: 18px;
+      border: 1px dashed rgba(32, 48, 49, 0.18);
+      color: var(--muted);
+      line-height: 1.55;
+      background: rgba(255, 255, 255, 0.74);
+    }
+
+    .insight-grid {
+      display: grid;
+      gap: 0.85rem;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .insight-card {
+      padding: 1rem;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(32, 48, 49, 0.08);
+    }
+
+    .insight-card h3 {
+      margin: 0 0 0.55rem;
+      font-size: 1.05rem;
+    }
+
+    .insight-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 0.92rem;
+    }
+
+    .insight-card .chip-row,
+    .insight-card .rationale-row,
+    .insight-card .flag-row {
+      margin-top: 0.7rem;
+    }
+
+    .compare-shell {
+      display: grid;
+      gap: 0.85rem;
+      padding: 1rem;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(32, 48, 49, 0.08);
+    }
+
+    .compare-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: end;
+    }
+
+    .compare-header h3 {
+      margin: 0;
+    }
+
+    .compare-header p {
+      margin: 0.28rem 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 0.92rem;
+    }
+
+    .compare-controls {
+      display: grid;
+      gap: 0.8rem;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      align-items: center;
+    }
+
+    .compare-slot {
+      display: grid;
+      gap: 0.4rem;
+    }
+
+    .compare-slot label {
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .vs-badge {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(15, 124, 130, 0.1), rgba(227, 180, 6, 0.16));
+      font-family: "Avenir Next Condensed", "Avenir Next", sans-serif;
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+
+    .compare-grid {
+      display: grid;
+      gap: 0.85rem;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .drug-card {
+      padding: 1rem;
+      border-radius: 20px;
+      border: 1px solid rgba(32, 48, 49, 0.08);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(246, 248, 248, 0.9));
+      display: grid;
+      gap: 0.8rem;
+    }
+
+    .drug-card h4 {
+      margin: 0;
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 1.08rem;
+    }
+
+    .drug-card p {
+      margin: 0.2rem 0 0;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 0.92rem;
+    }
+
+    .drug-card header {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.8rem;
+      align-items: start;
+    }
+
+    .metric-grid {
+      display: grid;
+      gap: 0.6rem;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .metric {
+      padding: 0.75rem;
+      border-radius: 16px;
+      background: rgba(32, 48, 49, 0.04);
+    }
+
+    .metric strong,
+    .metric span {
+      display: block;
+    }
+
+    .metric strong {
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .metric span {
+      margin-top: 0.18rem;
+      font-size: 0.95rem;
+    }
+
+    .callout {
+      padding: 0.8rem 0.9rem;
+      border-radius: 16px;
+      background: rgba(15, 124, 130, 0.06);
+      border: 1px solid rgba(15, 124, 130, 0.12);
+    }
+
+    .callout.warning {
+      background: rgba(224, 74, 69, 0.08);
+      border-color: rgba(224, 74, 69, 0.14);
+    }
+
+    .callout strong {
+      display: block;
+      margin-bottom: 0.25rem;
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 0.85rem;
+    }
+
+    .callout ul,
+    .drug-list {
+      margin: 0;
+      padding-left: 1rem;
+      line-height: 1.5;
+    }
+
+    .callout li,
+    .drug-list li {
+      margin: 0.2rem 0;
+    }
+
+    .footer-note {
+      padding: 1rem 1.15rem;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 0.94rem;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-top: 0.75rem;
+    }
+
+    @keyframes rise-in {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes card-in {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.99);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .hero-grid,
+      .app-grid,
+      .compare-grid,
+      .insight-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .panel.results-panel {
+        position: static;
+      }
+
+      .summary-strip {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page-shell {
+        width: min(100% - 1rem, 100%);
+        margin: 0.5rem auto 1.25rem;
+      }
+
+      .hero,
+      .panel.form-panel,
+      .panel.results-panel {
+        padding: 0.9rem;
+        border-radius: 24px;
+      }
+
+      .fields-grid,
+      .summary-strip,
+      .metric-grid,
+      .compare-controls {
+        grid-template-columns: 1fr;
+      }
+
+      .compare-controls {
+        align-items: stretch;
+      }
+
+      .vs-badge {
+        margin: 0 auto;
+      }
+
+      .lane-head,
+      .panel-heading,
+      .compare-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+
+    .tabs-shell {
+      display: grid;
+      gap: 0.8rem;
+    }
+
+    .tabs-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      padding: 0.35rem;
+      border-radius: 24px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.66);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .tab-btn {
+      flex: 1 1 280px;
+      border: 1px solid rgba(32, 48, 49, 0.08);
+      border-radius: 18px;
+      padding: 0.95rem 1rem;
+      background: transparent;
+      color: var(--ink);
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 0.96rem;
+      transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease, color 180ms ease;
+      cursor: pointer;
+    }
+
+    .tab-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .tab-btn.is-active {
+      background: linear-gradient(135deg, rgba(26, 65, 157, 0.95), rgba(11, 63, 136, 0.9));
+      color: #fff;
+      box-shadow: 0 14px 28px rgba(16, 91, 78, 0.22);
+      border-color: transparent;
+    }
+
+    .tab-panel[hidden] {
+      display: none !important;
+    }
+
+    .intake-grid {
+      display: grid;
+      gap: 1.2rem;
+      grid-template-columns: minmax(340px, 0.95fr) minmax(380px, 1.05fr);
+      align-items: start;
+    }
+
+    .flow-panel,
+    .panel.results-panel {
+      padding: 0.95rem;
+    }
+
+    .panel.results-panel {
+      position: static;
+      top: auto;
+    }
+
+    .flowchart-shell {
+      display: grid;
+      gap: 0.9rem;
+    }
+
+    .flow-row {
+      display: grid;
+      gap: 0.85rem;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .flow-node {
+      min-width: 0;
+      min-height: 192px;
+      display: grid;
+      gap: 0.5rem;
+      padding: 1rem;
+      border-radius: 22px;
+      border: 1px solid rgba(32, 48, 49, 0.09);
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 14px 26px rgba(32, 48, 49, 0.06);
+      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+
+    .flow-node::before {
+      content: "";
+      width: 3.4rem;
+      height: 0.38rem;
+      border-radius: 999px;
+      background: rgba(15, 124, 130, 0.18);
+    }
+
+    .flow-node.is-active {
+      transform: translateY(-2px);
+      border-color: rgba(29, 155, 82, 0.2);
+      box-shadow: 0 18px 28px rgba(29, 155, 82, 0.14);
+      background:
+        linear-gradient(180deg, rgba(29, 155, 82, 0.06), rgba(255, 255, 255, 0.98));
+    }
+
+    .flow-node.is-warning {
+      border-color: rgba(227, 180, 6, 0.22);
+      box-shadow: 0 18px 28px rgba(227, 180, 6, 0.14);
+      background:
+        linear-gradient(180deg, rgba(227, 180, 6, 0.08), rgba(255, 255, 255, 0.98));
+    }
+
+    .flow-node-start,
+    .flow-node-end {
+      max-width: 620px;
+      margin: 0 auto;
+      min-height: 0;
+    }
+
+    .flow-kicker {
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .flow-node h3 {
+      margin: 0;
+      font-family: "Avenir Next Condensed", "Avenir Next", sans-serif;
+      font-size: 1.18rem;
+      letter-spacing: -0.02em;
+    }
+
+    .flow-node p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.94rem;
+    }
+
+    .flow-state {
+      margin-top: auto;
+      padding: 0.7rem 0.75rem;
+      border-radius: 14px;
+      background: rgba(32, 48, 49, 0.05);
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 0.83rem;
+      line-height: 1.4;
+    }
+
+    .flow-node.is-active .flow-state {
+      background: var(--preferred-soft);
+      color: #0d6f39;
+    }
+
+    .flow-node.is-warning .flow-state {
+      background: var(--acceptable-soft);
+      color: #856300;
+    }
+
+    .flow-arrow {
+      text-align: center;
+      color: var(--focus);
+      font-family: "Avenir Next Condensed", "Avenir Next", sans-serif;
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+
+    .wizard-shell {
+      display: grid;
+      gap: 0.8rem;
+    }
+
+    .wizard-progress-card,
+    .decision-tree-card,
+    .question-card {
+      border-radius: 22px;
+      border: 1px solid rgba(32, 48, 49, 0.08);
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 14px 26px rgba(32, 48, 49, 0.06);
+    }
+
+    .wizard-progress-card,
+    .decision-tree-card {
+      padding: 0.9rem;
+    }
+
+    .wizard-progress-topline {
+      display: grid;
+      gap: 0.28rem;
+    }
+
+    .wizard-progress-topline strong,
+    .decision-tree-head h3,
+    .question-card h3 {
+      font-family: "Avenir Next Condensed", "Avenir Next", sans-serif;
+      letter-spacing: -0.02em;
+    }
+
+    .wizard-progress-topline span,
+    .decision-tree-head p,
+    .question-card p,
+    .path-step span,
+    .tree-stage span {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .wizard-progress-bar {
+      margin-top: 0.75rem;
+      width: 100%;
+      height: 0.82rem;
+      border-radius: 999px;
+      background: rgba(32, 48, 49, 0.08);
+      overflow: hidden;
+    }
+
+    .wizard-progress-bar span {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: #1651b8;
+      border-radius: inherit;
+      transition: width 220ms ease;
+    }
+
+    .wizard-progress-stats {
+      margin-top: 0.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+
+    .decision-tree-head {
+      margin-bottom: 0.9rem;
+    }
+
+    .decision-tree-head h3 {
+      margin: 0;
+      font-size: 1.15rem;
+    }
+
+    .decision-tree-head p {
+      margin: 0.28rem 0 0;
+      font-size: 0.92rem;
+    }
+
+    .tree-stage-list,
+    .answered-path-list {
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .tree-stage {
+      padding: 0.85rem 0.9rem;
+      border-radius: 18px;
+      background: rgba(32, 48, 49, 0.04);
+      border: 1px solid transparent;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .tree-stage strong {
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 0.92rem;
+    }
+
+    .tree-stage.is-current {
+      border-color: rgba(15, 124, 130, 0.18);
+      background: rgba(15, 124, 130, 0.08);
+    }
+
+    .tree-stage.is-complete {
+      border-color: rgba(29, 155, 82, 0.16);
+      background: rgba(29, 155, 82, 0.08);
+    }
+
+    .tree-stage.is-hidden {
+      opacity: 0.58;
+      border-style: dashed;
+    }
+
+    .answered-path-list {
+      margin-top: 0.85rem;
+    }
+
+    .path-empty {
+      padding: 0.95rem;
+      border-radius: 16px;
+      background: rgba(32, 48, 49, 0.04);
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .path-step {
+      padding: 0.85rem 0.9rem;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(32, 48, 49, 0.08);
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 0.8rem;
+      align-items: start;
+    }
+
+    .path-step strong {
+      display: block;
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      margin-bottom: 0.18rem;
+    }
+
+    .path-index {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: rgba(15, 124, 130, 0.1);
+      color: var(--focus);
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 0.84rem;
+    }
+
+    .question-card {
+      padding: 1rem;
+      display: grid;
+      gap: 0.8rem;
+    }
+
+    .question-card.is-complete {
+      background:
+        linear-gradient(180deg, rgba(29, 155, 82, 0.06), rgba(255, 255, 255, 0.98));
+    }
+
+    .question-kicker {
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .question-card h3 {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+
+    .question-card p {
+      margin: 0;
+      font-size: 0.95rem;
+    }
+
+    .question-input-area {
+      display: grid;
+      gap: 0.8rem;
+    }
+
+    .choice-grid,
+    .multi-option-grid {
+      display: grid;
+      gap: 0.7rem;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .answer-choice-btn {
+      border: 1px solid rgba(32, 48, 49, 0.12);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.98);
+      padding: 1rem;
+      text-align: left;
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 0.96rem;
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    }
+
+    .answer-choice-btn:hover,
+    .answer-choice-btn.is-selected {
+      transform: translateY(-1px);
+      border-color: rgba(15, 124, 130, 0.24);
+      box-shadow: 0 12px 20px rgba(15, 124, 130, 0.1);
+      background: rgba(15, 124, 130, 0.08);
+    }
+
+    .number-question-shell {
+      display: grid;
+      gap: 0.7rem;
+    }
+
+    .question-field-label {
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .number-input-wrap {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.7rem;
+      align-items: center;
+      padding: 0.55rem;
+      border-radius: 18px;
+      border: 1px solid rgba(32, 48, 49, 0.12);
+      background: #fff;
+    }
+
+    .number-input-wrap input {
+      width: 100%;
+      border: 0;
+      outline: none;
+      padding: 0.5rem 0.55rem;
+      font-size: 1.02rem;
+      background: transparent;
+      color: var(--ink);
+    }
+
+    .number-input-wrap span {
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      color: var(--muted);
+      font-size: 0.88rem;
+      white-space: nowrap;
+      padding-right: 0.35rem;
+    }
+
+    .multi-option {
+      position: relative;
+      display: block;
+      cursor: pointer;
+    }
+
+    .multi-option input {
+      position: absolute;
+      opacity: 0;
+      inset: 0;
+      cursor: pointer;
+    }
+
+    .multi-option span {
+      display: block;
+      padding: 0.95rem 1rem;
+      border-radius: 18px;
+      border: 1px solid rgba(32, 48, 49, 0.12);
+      background: rgba(255, 255, 255, 0.98);
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+      color: var(--ink);
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      line-height: 1.45;
+    }
+
+    .multi-option input:checked + span {
+      transform: translateY(-1px);
+      border-color: rgba(15, 124, 130, 0.24);
+      box-shadow: 0 12px 20px rgba(15, 124, 130, 0.1);
+      background: rgba(15, 124, 130, 0.08);
+    }
+
+    .question-caption {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .question-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .completion-preview {
+      display: grid;
+      gap: 0.75rem;
+      padding: 0.95rem 1rem;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(32, 48, 49, 0.08);
+    }
+
+    .completion-copy strong {
+      display: block;
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      margin-bottom: 0.2rem;
+    }
+
+    .completion-copy p {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .completion-chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+
+    .flowchart-shell {
+      display: block;
+    }
+
+    .flowchart-viewport,
+    .question-scroll-shell {
+      overflow-y: auto;
+      border-radius: 24px;
+      background: rgba(249, 251, 251, 0.76);
+      border: 1px solid rgba(32, 48, 49, 0.06);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(15, 124, 130, 0.35) transparent;
+    }
+
+    .flowchart-viewport {
+      max-height: var(--flow-pane-height);
+      padding: 0.75rem;
+    }
+
+    .question-scroll-shell {
+      max-height: var(--question-pane-height);
+      display: grid;
+      gap: 0.85rem;
+      padding: 0.15rem 0;
+      background: transparent;
+      border: 0;
+      align-content: start;
+      grid-auto-rows: max-content;
+    }
+
+    .flowchart-canvas {
+      min-height: 0;
+      padding: 0.8rem 0.5rem 1.5rem;
+      display: grid;
+      gap: 0.8rem;
+      justify-items: center;
+      align-content: start;
+    }
+
+    .flow-path-node {
+      width: min(100%, 440px);
+      display: grid;
+      gap: 0.45rem;
+      padding: 1rem 1.05rem;
+      border-radius: 22px;
+      border: 1px solid rgba(32, 48, 49, 0.12);
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 16px 28px rgba(32, 48, 49, 0.07);
+      justify-items: center;
+      text-align: center;
+      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+
+    .flow-path-node h3 {
+      margin: 0;
+      font-family: "Avenir Next Condensed", "Avenir Next", sans-serif;
+      font-size: 1.22rem;
+      letter-spacing: -0.02em;
+    }
+
+    .flow-path-node p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.94rem;
+    }
+
+    .flow-path-node.is-answered {
+      border-color: rgba(15, 124, 130, 0.28);
+      background: linear-gradient(180deg, rgba(15, 124, 130, 0.12), rgba(255, 255, 255, 0.98));
+    }
+
+    .flow-path-node.is-current {
+      transform: translateY(-2px);
+      border: 3px solid rgba(15, 124, 130, 0.72);
+      box-shadow: 0 20px 34px rgba(15, 124, 130, 0.18);
+      background: linear-gradient(180deg, rgba(15, 124, 130, 0.08), rgba(255, 255, 255, 0.98));
+    }
+
+    .flow-path-node.is-complete {
+      border-color: rgba(29, 155, 82, 0.26);
+      background: linear-gradient(180deg, rgba(29, 155, 82, 0.09), rgba(255, 255, 255, 0.98));
+    }
+
+    .flow-path-node.is-warning {
+      border-color: rgba(227, 180, 6, 0.28);
+      background: linear-gradient(180deg, rgba(227, 180, 6, 0.11), rgba(255, 255, 255, 0.98));
+    }
+
+    .flow-connector {
+      width: min(100%, 440px);
+      display: grid;
+      gap: 0.35rem;
+      justify-items: center;
+    }
+
+    .flow-line {
+      width: 3px;
+      height: 1.8rem;
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(15, 124, 130, 0.28), rgba(15, 124, 130, 0.62));
+    }
+
+    .flow-answer-chip,
+    .flow-node-answer,
+    .history-answer-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      min-height: 2rem;
+      padding: 0.45rem 0.8rem;
+      border-radius: 999px;
+      background: rgba(15, 124, 130, 0.12);
+      color: var(--focus);
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 0.86rem;
+      line-height: 1.35;
+      text-align: center;
+    }
+
+    .flow-answer-chip,
+    .history-answer-badge {
+      background: linear-gradient(135deg, rgba(18, 46, 184, 0.88), rgba(32, 90, 192, 0.82));
+      color: #fff;
+      box-shadow: 0 10px 20px rgba(15, 124, 130, 0.16);
+    }
+
+    .question-history-list {
+      display: grid;
+      gap: 0.8rem;
+      padding: 0 0.1rem;
+    }
+
+    .question-history-list:empty {
+      display: none;
+    }
+
+    .question-history-card {
+      padding: 0.95rem 1rem;
+      border-radius: 22px;
+      border: 1px solid rgba(15, 124, 130, 0.24);
+      background: linear-gradient(180deg, rgba(15, 124, 130, 0.12), rgba(255, 255, 255, 0.98));
+      box-shadow: 0 14px 24px rgba(15, 124, 130, 0.08);
+      display: grid;
+      gap: 0.7rem;
+    }
+
+    .question-history-card.is-latest {
+      border-color: rgba(15, 124, 130, 0.4);
+      box-shadow: 0 18px 28px rgba(15, 124, 130, 0.14);
+    }
+
+    .question-history-topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .question-history-stage {
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 0.82rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .question-history-card strong {
+      display: block;
+      margin-bottom: 0.45rem;
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      font-size: 1rem;
+    }
+
+    .question-card {
+      border-radius: 24px;
+      scroll-margin-block: 6rem;
+    }
+
+    .question-card.is-current {
+      border: 3px solid rgba(15, 124, 130, 0.72);
+      box-shadow: 0 22px 34px rgba(15, 124, 130, 0.18);
+      background: linear-gradient(180deg, rgba(15, 124, 130, 0.06), rgba(255, 255, 255, 0.99));
+    }
+
+    .question-card.is-complete {
+      border-width: 2px;
+    }
+
+    @media (max-width: 1180px) {
+      :root {
+        --flow-pane-height: min(58dvh, 36rem);
+        --question-pane-height: min(52dvh, 30rem);
+      }
+
+      .intake-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      :root {
+        --flow-pane-height: min(50dvh, 28rem);
+        --question-pane-height: min(46dvh, 24rem);
+      }
+
+      .tabs-bar {
+        padding: 0.35rem;
+        border-radius: 20px;
+      }
+
+      .tab-btn {
+        flex-basis: 100%;
+      }
+
+      .flow-panel,
+      .panel.results-panel {
+        padding: 0.9rem;
+      }
+
+      .choice-grid,
+      .multi-option-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .question-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .flow-path-node,
+      .flow-connector {
+        width: 100%;
+      }
+    }

@@ -1,0 +1,217 @@
+{
+  "drugs": [
+    {
+      "drug_name": "metformin",
+      "drug_class": "metformin",
+      "route": "oral",
+      "rough_cost_level": "low",
+      "weight_effect": "neutral",
+      "hypoglycemia_risk": "low",
+      "major_cautions": [
+        "Contraindicated if eGFR <30 mL/min/1.73 m2",
+        "GI side effects may require slow titration",
+        "Monitor for vitamin B12 deficiency with long-term use"
+      ],
+      "key_exclusion_conditions": [
+        "metformin_contraindicated",
+        "metformin_intolerance"
+      ]
+    },
+    {
+      "drug_name": "empagliflozin",
+      "drug_class": "SGLT2 inhibitor",
+      "route": "oral",
+      "rough_cost_level": "high",
+      "weight_effect": "loss_modest",
+      "hypoglycemia_risk": "low",
+      "major_cautions": [
+        "Reduced glycemic effect at eGFR <45 mL/min/1.73 m2",
+        "Rare DKA risk, especially with insulin deficiency or acute stress",
+        "Genital mycotic infection risk"
+      ],
+      "key_exclusion_conditions": [
+        "sglt2i_contraindicated",
+        "sglt2i_intolerance"
+      ]
+    },
+    {
+      "drug_name": "dapagliflozin",
+      "drug_class": "SGLT2 inhibitor",
+      "route": "oral",
+      "rough_cost_level": "high",
+      "weight_effect": "loss_modest",
+      "hypoglycemia_risk": "low",
+      "major_cautions": [
+        "Reduced glycemic effect at eGFR <45 mL/min/1.73 m2",
+        "Rare DKA risk, especially with insulin deficiency or acute stress",
+        "Volume depletion and genitourinary infection risk"
+      ],
+      "key_exclusion_conditions": [
+        "sglt2i_contraindicated",
+        "sglt2i_intolerance"
+      ]
+    },
+    {
+      "drug_name": "semaglutide",
+      "drug_class": "GLP-1 RA",
+      "route": "subcutaneous",
+      "rough_cost_level": "high",
+      "weight_effect": "loss_high",
+      "hypoglycemia_risk": "low",
+      "major_cautions": [
+        "GI intolerance can limit use",
+        "Avoid if pancreatitis is suspected or prior risk is high",
+        "Avoid in gastroparesis",
+        "Monitor for retinopathy issues in high-risk patients"
+      ],
+      "key_exclusion_conditions": [
+        "glp1_ra_contraindicated",
+        "glp1_ra_intolerance",
+        "prefers_oral_only"
+      ]
+    },
+    {
+      "drug_name": "liraglutide",
+      "drug_class": "GLP-1 RA",
+      "route": "subcutaneous",
+      "rough_cost_level": "high",
+      "weight_effect": "loss_moderate",
+      "hypoglycemia_risk": "low",
+      "major_cautions": [
+        "GI intolerance can limit use",
+        "Avoid if pancreatitis is suspected or prior risk is high",
+        "Avoid in gastroparesis"
+      ],
+      "key_exclusion_conditions": [
+        "glp1_ra_contraindicated",
+        "glp1_ra_intolerance",
+        "prefers_oral_only"
+      ]
+    },
+    {
+      "drug_name": "dulaglutide",
+      "drug_class": "GLP-1 RA",
+      "route": "subcutaneous",
+      "rough_cost_level": "high",
+      "weight_effect": "loss_moderate",
+      "hypoglycemia_risk": "low",
+      "major_cautions": [
+        "GI intolerance can limit use",
+        "Avoid if pancreatitis is suspected or prior risk is high",
+        "Avoid in gastroparesis"
+      ],
+      "key_exclusion_conditions": [
+        "glp1_ra_contraindicated",
+        "glp1_ra_intolerance",
+        "prefers_oral_only"
+      ]
+    },
+    {
+      "drug_name": "tirzepatide",
+      "drug_class": "dual GIP/GLP-1 RA",
+      "route": "subcutaneous",
+      "rough_cost_level": "high",
+      "weight_effect": "loss_high",
+      "hypoglycemia_risk": "low",
+      "major_cautions": [
+        "GI intolerance can limit use",
+        "Avoid if pancreatitis is suspected or prior risk is high",
+        "Avoid in gastroparesis",
+        "Injectable therapy only"
+      ],
+      "key_exclusion_conditions": [
+        "dual_gip_glp1_ra_contraindicated",
+        "dual_gip_glp1_ra_intolerance",
+        "prefers_oral_only"
+      ]
+    },
+    {
+      "drug_name": "sitagliptin",
+      "drug_class": "DPP-4 inhibitor",
+      "route": "oral",
+      "rough_cost_level": "high",
+      "weight_effect": "neutral",
+      "hypoglycemia_risk": "low",
+      "major_cautions": [
+        "Do not combine with GLP-1-based therapy in this MVP",
+        "Dose adjustment required with kidney impairment",
+        "Possible pancreatitis risk signal"
+      ],
+      "key_exclusion_conditions": [
+        "dpp4i_contraindicated",
+        "dpp4i_intolerance",
+        "on_glp1_based_therapy"
+      ]
+    },
+    {
+      "drug_name": "linagliptin",
+      "drug_class": "DPP-4 inhibitor",
+      "route": "oral",
+      "rough_cost_level": "high",
+      "weight_effect": "neutral",
+      "hypoglycemia_risk": "low",
+      "major_cautions": [
+        "Do not combine with GLP-1-based therapy in this MVP",
+        "Possible pancreatitis risk signal"
+      ],
+      "key_exclusion_conditions": [
+        "dpp4i_contraindicated",
+        "dpp4i_intolerance",
+        "on_glp1_based_therapy"
+      ]
+    },
+    {
+      "drug_name": "pioglitazone",
+      "drug_class": "pioglitazone",
+      "route": "oral",
+      "rough_cost_level": "low",
+      "weight_effect": "gain",
+      "hypoglycemia_risk": "low",
+      "major_cautions": [
+        "Do not use in heart failure",
+        "Fluid retention risk",
+        "Bone fracture risk",
+        "Use caution with bladder cancer history"
+      ],
+      "key_exclusion_conditions": [
+        "pioglitazone_contraindicated",
+        "pioglitazone_intolerance",
+        "has_hf"
+      ]
+    },
+    {
+      "drug_name": "insulin glargine",
+      "drug_class": "basal insulin",
+      "route": "subcutaneous",
+      "rough_cost_level": "high",
+      "weight_effect": "gain",
+      "hypoglycemia_risk": "high",
+      "major_cautions": [
+        "Higher hypoglycemia burden than non-insulin options",
+        "Weight gain risk",
+        "Requires injection and titration"
+      ],
+      "key_exclusion_conditions": [
+        "basal_insulin_contraindicated",
+        "prefers_oral_only"
+      ]
+    },
+    {
+      "drug_name": "NPH insulin",
+      "drug_class": "basal insulin",
+      "route": "subcutaneous",
+      "rough_cost_level": "low",
+      "weight_effect": "gain",
+      "hypoglycemia_risk": "high",
+      "major_cautions": [
+        "Higher hypoglycemia burden than analog basal insulin",
+        "Weight gain risk",
+        "Requires injection and titration"
+      ],
+      "key_exclusion_conditions": [
+        "basal_insulin_contraindicated",
+        "prefers_oral_only"
+      ]
+    }
+  ]
+}
