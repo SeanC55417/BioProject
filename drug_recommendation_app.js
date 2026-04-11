@@ -680,7 +680,8 @@
     };
 
     bindStaticEvents();
-    hydrateSession(loadStoredState());
+    clearStoredState();
+    hydrateSession(createFreshSession(DEFAULT_STATE));
 
     function bindStaticEvents() {
       dom.demoBtn.addEventListener("click", () => hydrateSession(createCompletedSession(DEMO_STATE)));
@@ -2090,23 +2091,18 @@
 
     function persistState() {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          state: latestState,
-          answeredQuestionIds: wizardSession.answeredQuestionIds,
-          questionHistory: wizardSession.questionHistory,
-          currentQuestionId: wizardSession.currentQuestionId
-        }));
+        // The app now starts fresh on every page load, so browser persistence stays disabled.
+        localStorage.removeItem(STORAGE_KEY);
       } catch (error) {
         // Ignore storage failures in restricted environments.
       }
     }
 
-    function loadStoredState() {
+    function clearStoredState() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : null;
+        localStorage.removeItem(STORAGE_KEY);
       } catch (error) {
-        return null;
+        // Ignore storage failures in restricted environments.
       }
     }
 
