@@ -404,12 +404,13 @@
         id: "diabetes_type",
         stageKey: "scope",
         inputType: "choice",
-        label: "What type of diabetes is being evaluated?",
+        label: "What condition is being evaluated?",
         help: "This simplified algorithm only continues for type 2 diabetes.",
         options: [
           { label: "Type 2 diabetes", value: "T2DM" },
-          { label: "Type 1 diabetes", value: "T1DM" },
-          { label: "Not entered yet", value: "NA" }
+          { label: "Heart Disease", value: "Heart" },
+          { label: "Other", value: "NA" },
+          { label: "Other", value: "NA" }
         ],
         apply(state, value) {
           state.diabetes_type = value;
@@ -630,10 +631,10 @@
 
     const dom = {
       demoBtn: document.getElementById("demo-btn"),
-      openResultsBtn: document.getElementById("open-results-btn"),
       jumpToResultsTopBtn: document.getElementById("jump-to-results-top"),
       backToQuestionsBtn: document.getElementById("back-to-questions-btn"),
       resetBtn: document.getElementById("reset-btn"),
+      resultsTabButton: document.getElementById("tab-button-results"),
       tabButtons: Array.from(document.querySelectorAll(".tab-btn")),
       tabPanels: Array.from(document.querySelectorAll(".tab-panel")),
       wizardStageLabel: document.getElementById("wizard-stage-label"),
@@ -651,7 +652,6 @@
       questionHelp: document.getElementById("question-help"),
       questionInputArea: document.getElementById("question-input-area"),
       backQuestionBtn: document.getElementById("back-question-btn"),
-      reviewResultsBtn: document.getElementById("review-results-btn"),
       advanceQuestionBtn: document.getElementById("advance-question-btn"),
       statusBanner: document.getElementById("status-banner"),
       preferredGrid: document.getElementById("preferred-grid"),
@@ -685,10 +685,8 @@
     function bindStaticEvents() {
       dom.demoBtn.addEventListener("click", () => hydrateSession(createCompletedSession(DEMO_STATE)));
       dom.resetBtn.addEventListener("click", () => hydrateSession(createFreshSession(DEFAULT_STATE)));
-      dom.openResultsBtn.addEventListener("click", () => switchTab("tab-results"));
       dom.jumpToResultsTopBtn.addEventListener("click", () => switchTab("tab-results"));
       dom.backToQuestionsBtn.addEventListener("click", () => switchTab("tab-intake"));
-      dom.reviewResultsBtn.addEventListener("click", () => switchTab("tab-results"));
       dom.backQuestionBtn.addEventListener("click", goToPreviousQuestion);
       dom.advanceQuestionBtn.addEventListener("click", advanceCurrentQuestion);
 
@@ -970,6 +968,10 @@
       wizardSession.currentQuestionId = getNextQuestionId(latestState, question.id);
       persistState();
       renderApplication(latestState);
+
+      if (wizardSession.currentQuestionId === null && latestResult?.status === "ok") {
+        switchTab("tab-results");
+      }
     }
 
     function getQuestionCurrentValue(question, state) {
@@ -1023,6 +1025,7 @@
       const result = recommendTherapy(state);
       latestState = { ...state };
       latestResult = result;
+      renderResultAccessState(currentQuestion === null);
       renderFlowchart(state, result, currentQuestion);
       renderWizard(state, result, currentQuestion);
       updateCounts(result);
@@ -1103,11 +1106,10 @@
           ? "The guided intake is complete."
           : result.message;
         dom.questionHelp.textContent = result.status === "ok"
-          ? "You can open the recommendation tab now, or go back to revise earlier answers."
+          ? "The recommendations tab is now unlocked. You can review it or go back to revise earlier answers."
           : "Use Back to revise the scope answer if you want to continue the type 2 diabetes pathway.";
         dom.questionInputArea.innerHTML = renderCompletionPreview(result);
         dom.advanceQuestionBtn.hidden = true;
-        dom.reviewResultsBtn.textContent = "Open recommendation tab";
         dom.backQuestionBtn.disabled = !getPreviousQuestionId(state);
         return;
       }
@@ -1120,8 +1122,20 @@
       dom.questionInputArea.innerHTML = renderQuestionInput(question, state);
       dom.advanceQuestionBtn.hidden = question.inputType === "choice";
       dom.advanceQuestionBtn.textContent = "Continue";
-      dom.reviewResultsBtn.textContent = answeredCount ? "Review recommendations" : "Skip to recommendations";
       dom.backQuestionBtn.disabled = !getPreviousQuestionId(state);
+    }
+
+    function renderResultAccessState(isUnlocked) {
+      if (dom.jumpToResultsTopBtn) {
+        dom.jumpToResultsTopBtn.disabled = !isUnlocked;
+        dom.jumpToResultsTopBtn.title = isUnlocked ? "" : "Complete all questions to unlock recommendations.";
+      }
+
+      if (dom.resultsTabButton) {
+        dom.resultsTabButton.disabled = !isUnlocked;
+        dom.resultsTabButton.setAttribute("aria-disabled", String(!isUnlocked));
+        dom.resultsTabButton.title = isUnlocked ? "" : "Complete all questions to unlock recommendations.";
+      }
     }
 
     function renderQuestionInput(question, state) {
@@ -1236,6 +1250,10 @@
     }
 
     function switchTab(tabId) {
+      if (tabId === "tab-results" && !isResultsUnlocked()) {
+        return;
+      }
+
       dom.tabButtons.forEach((button) => {
         const isActive = button.dataset.tabTarget === tabId;
         button.classList.toggle("is-active", isActive);
@@ -1248,6 +1266,10 @@
         panel.hidden = !isActive;
         panel.classList.toggle("is-active", isActive);
       });
+    }
+
+    function isResultsUnlocked(state = latestState) {
+      return getCurrentQuestion(state) === null;
     }
 
     function renderFlowchart(state, result, currentQuestion) {
@@ -1313,8 +1335,6 @@
     function renderFlowConnector(label) {
       return `
         <div class="flow-connector">
-          <div class="flow-line"></div>
-          <div class="flow-answer-chip">${label}</div>
           <div class="flow-line"></div>
         </div>
       `;
@@ -1890,12 +1910,6 @@
             </div>
           `
           : `
-            <div class="callout">
-              <strong>Profile fit</strong>
-              <ul>
-                <li>No exclusion flags from the medication catalog are currently triggered for this drug.</li>
-              </ul>
-            </div>
           `}
       `;
     }

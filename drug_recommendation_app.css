@@ -7,13 +7,13 @@
       --muted: #617376;
       --line: rgba(32, 48, 49, 0.1);
       --shadow: 0 18px 50px rgba(28, 39, 40, 0.1);
-      --preferred: #1d9b52;
+      --preferred: #78ca90;
       --preferred-soft: rgba(29, 155, 82, 0.12);
-      --acceptable: #e3b406;
+      --acceptable: #fff200;
       --acceptable-soft: rgba(227, 180, 6, 0.14);
-      --avoid: #e04a45;
+      --avoid: #e13832;
       --avoid-soft: rgba(224, 74, 69, 0.12);
-      --focus: #68a8f0;
+      --focus: #000000;
       --hero: #f3f9ff;
       --radius: 24px;
       --radius-sm: 16px;
@@ -44,6 +44,8 @@
     h2 {
       font-family: "Avenir Next Condensed", "Avenir Next", "Gill Sans", sans-serif;
       color: var(--ink);
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
     }
 
     body::before,
@@ -115,7 +117,7 @@
       display: inline-flex;
       align-items: center;
       gap: 0.45rem;
-      padding: 0.35rem 0.75rem;
+      /* padding: 0.35rem 0.75rem; */
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.16);
       font-family: "Avenir Next", "Trebuchet MS", "Gill Sans", sans-serif;
@@ -248,6 +250,21 @@
     .ghost-btn:hover,
     .accent-btn:hover {
       transform: translateY(-1px);
+    }
+
+    .ghost-btn:disabled,
+    .accent-btn:disabled,
+    .tab-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .ghost-btn:disabled:hover,
+    .accent-btn:disabled:hover,
+    .tab-btn:disabled:hover {
+      transform: none;
     }
 
     .ghost-btn {
@@ -523,17 +540,17 @@
 
     .lane.preferred {
       background:
-        #22b14c;
+        var(--preferred);
     }
 
     .lane.acceptable {
       background:
-        #fff200;
+        var(--acceptable);
     }
 
     .lane.avoid {
       background:
-        #ed1c24;
+        var(--avoid);
     }
 
     .lane-head {
@@ -993,7 +1010,7 @@
     }
 
     .tab-btn.is-active {
-      background: linear-gradient(135deg, rgba(26, 65, 157, 0.95), rgba(11, 63, 136, 0.9));
+      background: var(--focus);
       color: #fff;
       box-shadow: 0 14px 28px rgba(16, 91, 78, 0.22);
       border-color: transparent;
@@ -1455,10 +1472,6 @@
       gap: 0.45rem;
     }
 
-    .flowchart-shell {
-      display: block;
-    }
-
     .flowchart-viewport,
     .question-scroll-shell {
       overflow-y: auto;
@@ -1466,7 +1479,7 @@
       background: rgba(249, 251, 251, 0.76);
       border: 1px solid rgba(32, 48, 49, 0.06);
       scrollbar-width: thin;
-      scrollbar-color: rgba(15, 124, 130, 0.35) transparent;
+      scrollbar-color: rgba(0, 0, 0, 0.35) transparent;
     }
 
     .flowchart-viewport {
@@ -1524,14 +1537,14 @@
 
     .flow-path-node.is-answered {
       border-color: rgba(15, 124, 130, 0.28);
-      background: linear-gradient(180deg, rgba(15, 124, 130, 0.12), rgba(255, 255, 255, 0.98));
+      background: linear-gradient(180deg, rgba(15, 124, 130, 0.122), rgba(255, 255, 255, 0.98));
     }
 
     .flow-path-node.is-current {
       transform: translateY(-2px);
       border: 3px solid rgba(15, 124, 130, 0.72);
       box-shadow: 0 20px 34px rgba(15, 124, 130, 0.18);
-      background: linear-gradient(180deg, rgba(15, 124, 130, 0.08), rgba(255, 255, 255, 0.98));
+      background: linear-gradient(180deg, rgba(15, 124, 130, 0.122), rgba(255, 255, 255, 0.98));
     }
 
     .flow-path-node.is-complete {
@@ -1555,7 +1568,7 @@
       width: 3px;
       height: 1.8rem;
       border-radius: 999px;
-      background: linear-gradient(180deg, rgba(15, 124, 130, 0.28), rgba(15, 124, 130, 0.62));
+      background: linear-gradient(180deg, rgba(15, 124, 130, 0.28), rgba(91, 178, 183, 0.62));
     }
 
     .flow-answer-chip,
@@ -1597,7 +1610,7 @@
       padding: 0.95rem 1rem;
       border-radius: 22px;
       border: 1px solid rgba(15, 124, 130, 0.24);
-      background: linear-gradient(180deg, rgba(15, 124, 130, 0.12), rgba(255, 255, 255, 0.98));
+      background: linear-gradient(180deg, rgba(15, 124, 130, 0.122), rgba(255, 255, 255, 0.98));
       box-shadow: 0 14px 24px rgba(15, 124, 130, 0.08);
       display: grid;
       gap: 0.7rem;
@@ -1653,6 +1666,20 @@
 
       .intake-grid {
         grid-template-columns: 1fr;
+        align-items: start;
+      }
+
+      .flow-panel {
+        display: block;
+      }
+
+      .flowchart-shell {
+        min-height: auto;
+      }
+
+      .flowchart-viewport {
+        height: auto;
+        max-height: var(--flow-pane-height);
       }
     }
 
