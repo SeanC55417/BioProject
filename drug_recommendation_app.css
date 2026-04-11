@@ -13,8 +13,8 @@
       --acceptable-soft: rgba(227, 180, 6, 0.14);
       --avoid: #e04a45;
       --avoid-soft: rgba(224, 74, 69, 0.12);
-      --focus: #2784ee;
-      --hero: #70aff6;
+      --focus: #68a8f0;
+      --hero: #f3f9ff;
       --radius: 24px;
       --radius-sm: 16px;
       --flow-pane-height: clamp(24rem, calc(100dvh - 19rem), 44rem);
@@ -39,6 +39,11 @@
         radial-gradient(circle at top left, rgba(16, 91, 78, 0.08), transparent 28%),
         radial-gradient(circle at 88% 12%, rgba(227, 180, 6, 0.13), transparent 20%),
         linear-gradient(180deg, var(--bg-1), var(--bg-2));
+    }
+
+    h2 {
+      font-family: "Avenir Next Condensed", "Avenir Next", "Gill Sans", sans-serif;
+      color: var(--ink);
     }
 
     body::before,
@@ -117,6 +122,7 @@
       font-size: 0.84rem;
       letter-spacing: 0.06em;
       text-transform: uppercase;
+      color: rgba(0, 0, 0, 0.9);
     }
 
     h1 {
@@ -130,7 +136,7 @@
     .hero p {
       margin: 0;
       max-width: 72ch;
-      color: rgba(255, 254, 248, 0.88);
+      color: rgba(0, 0, 0, 0.88);
       font-size: 1.04rem;
       line-height: 1.55;
     }
