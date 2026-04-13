@@ -17,8 +17,8 @@
       --hero: #f3f9ff;
       --radius: 24px;
       --radius-sm: 16px;
-      --flow-pane-height: clamp(24rem, calc(100dvh - 19rem), 44rem);
-      --question-pane-height: clamp(18rem, calc(100dvh - 26rem), 31rem);
+      --flow-pane-height: clamp(26rem, 100dvh, 38.3rem);
+      --question-pane-height: clamp(18rem, 100dvh, 25rem);
     }
 
     * {
@@ -1023,7 +1023,7 @@
     .intake-grid {
       display: grid;
       gap: 1.2rem;
-      grid-template-columns: minmax(340px, 0.95fr) minmax(380px, 1.05fr);
+      grid-template-columns: minmax(340px, 0.95fr) minmax(400px, 1.05fr);
       align-items: start;
     }
 
