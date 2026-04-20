@@ -196,7 +196,7 @@
       z-index: 1;
       display: grid;
       gap: 1rem;
-      grid-template-columns: minmax(0, 1.7fr) minmax(300px, 0.9fr);
+      grid-template-columns: minmax(0, 1fr);
       align-items: start;
     }
 
@@ -224,7 +224,7 @@
 
     .hero p {
       margin: 0;
-      max-width: 72ch;
+      max-width: none;
       color: rgba(0, 0, 0, 0.88);
       font-size: 1.04rem;
       line-height: 1.55;
