@@ -7,6 +7,21 @@
   <link rel="stylesheet" href="drug_recommendation_app.css">
 </head>
 <body>
+  <div class="disclaimer-modal" id="disclaimer-modal" aria-hidden="true" hidden>
+    <div class="disclaimer-backdrop"></div>
+    <section class="disclaimer-dialog" role="dialog" aria-modal="true" aria-labelledby="disclaimer-title" aria-describedby="disclaimer-copy">
+      <span class="disclaimer-kicker">Clinical Support Notice</span>
+      <h2 id="disclaimer-title">This tool is designed only to support providers&rsquo; clinical decision making.</h2>
+      <div class="disclaimer-copy" id="disclaimer-copy">
+        <p>All recommendations from this tool must be reviewed and double checked by qualified healthcare professionals before any clinical action is taken.</p>
+        <p>Patients should not use this tool to self-diagnose, self-treat, or self-modify medications, doses, or treatment regimens.</p>
+      </div>
+      <div class="disclaimer-actions">
+        <button class="accent-btn" id="disclaimer-ack-btn" type="button">I understand</button>
+      </div>
+    </section>
+  </div>
+
   <main class="page-shell">
     <section class="hero">
       <div class="hero-grid">

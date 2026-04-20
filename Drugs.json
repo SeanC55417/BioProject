@@ -161,6 +161,44 @@
       ]
     },
     {
+      "drug_name": "glipizide",
+      "drug_class": "Sulfonylurea",
+      "route": "oral",
+      "rough_cost_level": "low",
+      "weight_effect": "gain",
+      "hypoglycemia_risk": "high",
+      "major_cautions": [
+        "Higher hypoglycemia risk than most non-insulin options",
+        "Weight gain can occur",
+        "Use extra caution with inconsistent meal intake or in older adults"
+      ],
+      "key_exclusion_conditions": [
+        "sulfonylurea_contraindicated",
+        "sulfonylurea_intolerance",
+        "high_hypoglycemia_risk",
+        "prioritize_hypoglycemia_avoidance"
+      ]
+    },
+    {
+      "drug_name": "glimepiride",
+      "drug_class": "Sulfonylurea",
+      "route": "oral",
+      "rough_cost_level": "low",
+      "weight_effect": "gain",
+      "hypoglycemia_risk": "high",
+      "major_cautions": [
+        "Higher hypoglycemia risk than most non-insulin options",
+        "Weight gain can occur",
+        "Use caution with kidney impairment and variable food intake"
+      ],
+      "key_exclusion_conditions": [
+        "sulfonylurea_contraindicated",
+        "sulfonylurea_intolerance",
+        "high_hypoglycemia_risk",
+        "prioritize_hypoglycemia_avoidance"
+      ]
+    },
+    {
       "drug_name": "pioglitazone",
       "drug_class": "pioglitazone",
       "route": "oral",

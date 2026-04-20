@@ -26,6 +26,10 @@
         label: "DPP-4 inhibitor",
         description: "Oral, weight-neutral, lower-potency fallback in this simplified model."
       },
+      sulfonylurea: {
+        label: "Sulfonylurea",
+        description: "Lower-cost oral option with stronger glycemic effect, but more hypoglycemia and weight-gain risk."
+      },
       pioglitazone: {
         label: "Pioglitazone",
         description: "Lower-cost oral alternative that may surface when cost matters or MASLD logic fires."
@@ -57,7 +61,7 @@
             id: "a1c_current_percent",
             type: "number",
             label: "Current A1C (%)",
-            help: "Used for A1C gap and severe hyperglycemia checks.",
+            help: "The A1c target should be tailored to the individual through shared-decision making.",
             min: 4,
             max: 18,
             step: 0.1
@@ -144,6 +148,7 @@
           {
             id: "albuminuria_present",
             type: "checkbox",
+            help: "Defined as albumin (urine/serum/ratio?) 30 mg/g or higher.",
             label: "Albuminuria present",
             fullWidth: true
           }
@@ -253,6 +258,11 @@
             label: "Already on a DPP-4 inhibitor"
           },
           {
+            id: "on_sulfonylurea",
+            type: "checkbox",
+            label: "Already on a sulfonylurea"
+          },
+          {
             id: "on_basal_insulin",
             type: "checkbox",
             label: "Already on basal insulin"
@@ -295,6 +305,11 @@
             label: "DPP-4 inhibitor contraindicated"
           },
           {
+            id: "sulfonylurea_contraindicated",
+            type: "checkbox",
+            label: "Sulfonylurea contraindicated"
+          },
+          {
             id: "basal_insulin_contraindicated",
             type: "checkbox",
             label: "Basal insulin contraindicated",
@@ -334,6 +349,7 @@
       on_GLP1_RA: false,
       on_dual_GIP_GLP1_RA: false,
       on_DPP4i: false,
+      on_sulfonylurea: false,
       on_basal_insulin: false,
       metformin_contraindicated: false,
       SGLT2i_contraindicated: false,
@@ -341,6 +357,7 @@
       dual_GIP_GLP1_RA_contraindicated: false,
       pioglitazone_contraindicated: false,
       dpp4i_contraindicated: false,
+      sulfonylurea_contraindicated: false,
       basal_insulin_contraindicated: false
     };
 
@@ -374,6 +391,7 @@
       on_GLP1_RA: false,
       on_dual_GIP_GLP1_RA: false,
       on_DPP4i: false,
+      on_sulfonylurea: false,
       on_basal_insulin: false,
       metformin_contraindicated: false,
       SGLT2i_contraindicated: false,
@@ -381,6 +399,7 @@
       dual_GIP_GLP1_RA_contraindicated: false,
       pioglitazone_contraindicated: false,
       dpp4i_contraindicated: false,
+      sulfonylurea_contraindicated: false,
       basal_insulin_contraindicated: false
     };
 
@@ -433,7 +452,7 @@
         stageKey: "glycemia",
         inputType: "number",
         label: "What is the A1C target for this patient?",
-        help: "The tool compares current A1C against this target.",
+        help: "The A1c target should be tailored to the individual through shared-decision making.",
         min: 5,
         max: 10,
         step: 0.1,
@@ -457,7 +476,7 @@
         stageKey: "glycemia",
         inputType: "choice",
         label: "Is symptomatic hyperglycemia present?",
-        help: "Examples include symptomatic high sugars or decompensated presentation.",
+        help: "Common symptoms include polyuria, polydipsia, and lethargy.",
         options: yesNoOptions,
         field: "symptomatic_hyperglycemia",
         visibleIf: isType2Case
@@ -477,6 +496,7 @@
         stageKey: "cardiorenal",
         inputType: "choice",
         label: "Is there established ASCVD?",
+        help: "ASCVD refers to a history of ACS, MI, stroke, arterial revascularization, …",
         options: yesNoOptions,
         field: "has_established_ASCVD",
         visibleIf: isType2Case
@@ -486,6 +506,7 @@
         stageKey: "cardiorenal",
         inputType: "choice",
         label: "Are there indicators of high cardiovascular risk?",
+        help: "Key risk factors include hypertension, dyslipidemia, hyperglycemia, and obesity.",
         options: yesNoOptions,
         field: "has_indicators_high_CVD_risk",
         visibleIf: isType2Case
@@ -544,6 +565,7 @@
         stageKey: "cardiorenal",
         inputType: "choice",
         label: "Is albuminuria present?",
+        help: "Defined as albumin (urine/serum/ratio?) higher than",
         options: yesNoOptions,
         field: "albuminuria_present",
         visibleIf: isType2Case
@@ -606,6 +628,7 @@
           { key: "on_GLP1_RA", label: "GLP-1 RA" },
           { key: "on_dual_GIP_GLP1_RA", label: "Dual GIP/GLP-1 RA" },
           { key: "on_DPP4i", label: "DPP-4 inhibitor" },
+          { key: "on_sulfonylurea", label: "Sulfonylurea" },
           { key: "on_basal_insulin", label: "Basal insulin" }
         ],
         visibleIf: isType2Case
@@ -623,6 +646,7 @@
           { key: "dual_GIP_GLP1_RA_contraindicated", label: "Dual GIP/GLP-1 RA" },
           { key: "pioglitazone_contraindicated", label: "Pioglitazone" },
           { key: "dpp4i_contraindicated", label: "DPP-4 inhibitor" },
+          { key: "sulfonylurea_contraindicated", label: "Sulfonylurea" },
           { key: "basal_insulin_contraindicated", label: "Basal insulin" }
         ],
         visibleIf: isType2Case
@@ -630,6 +654,7 @@
     ];
 
     const dom = {
+      pageShell: document.querySelector(".page-shell"),
       demoBtn: document.getElementById("demo-btn"),
       jumpToResultsTopBtn: document.getElementById("jump-to-results-top"),
       backToQuestionsBtn: document.getElementById("back-to-questions-btn"),
@@ -665,7 +690,10 @@
       compareLeft: document.getElementById("compare-left"),
       compareRight: document.getElementById("compare-right"),
       compareLeftCard: document.getElementById("compare-left-card"),
-      compareRightCard: document.getElementById("compare-right-card")
+      compareRightCard: document.getElementById("compare-right-card"),
+      disclaimerModal: document.getElementById("disclaimer-modal"),
+      disclaimerDialog: document.querySelector(".disclaimer-dialog"),
+      disclaimerAcknowledgeBtn: document.getElementById("disclaimer-ack-btn")
     };
 
     const groupedDrugs = groupDrugsByClass(DRUG_DATA.drugs);
@@ -682,6 +710,7 @@
     bindStaticEvents();
     clearStoredState();
     hydrateSession(createFreshSession(DEFAULT_STATE));
+    showDisclaimerModal();
 
     function bindStaticEvents() {
       dom.demoBtn.addEventListener("click", () => hydrateSession(createCompletedSession(DEMO_STATE)));
@@ -690,6 +719,17 @@
       dom.backToQuestionsBtn.addEventListener("click", () => switchTab("tab-intake"));
       dom.backQuestionBtn.addEventListener("click", goToPreviousQuestion);
       dom.advanceQuestionBtn.addEventListener("click", advanceCurrentQuestion);
+      dom.disclaimerAcknowledgeBtn?.addEventListener("click", hideDisclaimerModal);
+      dom.questionHistoryList.addEventListener("click", handleQuestionJumpClick);
+      dom.flowchartCanvas.addEventListener("click", handleQuestionJumpClick);
+      dom.questionHistoryList.addEventListener("keydown", handleQuestionJumpKeydown);
+      dom.flowchartCanvas.addEventListener("keydown", handleQuestionJumpKeydown);
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && isDisclaimerModalOpen()) {
+          hideDisclaimerModal();
+        }
+      });
 
       dom.tabButtons.forEach((button) => {
         button.addEventListener("click", () => switchTab(button.dataset.tabTarget));
@@ -748,6 +788,91 @@
           renderCompareCards(latestResult, latestState);
         }
       });
+    }
+
+    function handleQuestionJumpClick(event) {
+      const jumpSource = event.target instanceof Element ? event.target : null;
+      const jumpTarget = jumpSource?.closest("[data-question-jump]");
+      if (!jumpTarget) {
+        return;
+      }
+
+      jumpToQuestion(jumpTarget.dataset.questionJump);
+    }
+
+    function handleQuestionJumpKeydown(event) {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+
+      const jumpSource = event.target instanceof Element ? event.target : null;
+      const jumpTarget = jumpSource?.closest("[data-question-jump]");
+      if (!jumpTarget) {
+        return;
+      }
+
+      event.preventDefault();
+      jumpToQuestion(jumpTarget.dataset.questionJump);
+    }
+
+    function jumpToQuestion(questionId) {
+      if (!questionId || !QUESTION_LOOKUP[questionId]) {
+        return;
+      }
+
+      const visibleIds = getVisibleQuestions(latestState).map((question) => question.id);
+      if (!visibleIds.includes(questionId)) {
+        return;
+      }
+
+      wizardSession.currentQuestionId = questionId;
+      switchTab("tab-intake");
+      persistState();
+      renderApplication(latestState);
+    }
+
+    function isDisclaimerModalOpen() {
+      return Boolean(dom.disclaimerModal?.classList.contains("is-open"));
+    }
+
+    function showDisclaimerModal() {
+      if (!dom.disclaimerModal) {
+        return;
+      }
+
+      dom.disclaimerModal.hidden = false;
+      dom.disclaimerModal.setAttribute("aria-hidden", "false");
+      dom.disclaimerModal.classList.add("is-open");
+      document.body.classList.add("has-disclaimer-open");
+
+      if (dom.pageShell) {
+        dom.pageShell.setAttribute("aria-hidden", "true");
+        if ("inert" in dom.pageShell) {
+          dom.pageShell.inert = true;
+        }
+      }
+
+      requestAnimationFrame(() => {
+        dom.disclaimerAcknowledgeBtn?.focus();
+      });
+    }
+
+    function hideDisclaimerModal() {
+      if (!dom.disclaimerModal) {
+        return;
+      }
+
+      dom.disclaimerModal.classList.remove("is-open");
+      dom.disclaimerModal.setAttribute("aria-hidden", "true");
+      dom.disclaimerModal.hidden = true;
+      document.body.classList.remove("has-disclaimer-open");
+
+      if (dom.pageShell) {
+        dom.pageShell.removeAttribute("aria-hidden");
+        if ("inert" in dom.pageShell) {
+          dom.pageShell.inert = false;
+        }
+      }
     }
 
     function hydrateSession(savedSession) {
@@ -1084,7 +1209,12 @@
         const question = QUESTION_LOOKUP[id];
         const answerSummary = getQuestionAnswerSummary(question, state);
         return `
-          <article class="question-history-card ${index === pathIds.length - 1 ? "is-latest" : ""}">
+          <article
+            class="question-history-card is-jumpable ${index === pathIds.length - 1 ? "is-latest" : ""}"
+            data-question-jump="${id}"
+            role="button"
+            tabindex="0"
+            aria-label="Edit answer for ${question.label}">
             <div class="question-history-topline">
               <span class="path-index">${index + 1}</span>
               <span class="question-history-stage">${getStageLabel(question.stageKey)}</span>
@@ -1295,7 +1425,12 @@
         const question = QUESTION_LOOKUP[id];
         const answerSummary = getQuestionAnswerSummary(question, state);
         pathMarkup.push(`
-          <article class="flow-path-node is-answered">
+          <article
+            class="flow-path-node is-answered is-jumpable"
+            data-question-jump="${id}"
+            role="button"
+            tabindex="0"
+            aria-label="Edit answer for ${question.label}">
             <span class="flow-kicker">${getStageLabel(question.stageKey)}</span>
             <h3>${question.label}</h3>
             <div class="flow-node-answer">${answerSummary}</div>
@@ -1424,6 +1559,10 @@
 
       if (inputs.dpp4i_contraindicated) {
         addUnique(avoid_classes, "DPP4i");
+      }
+
+      if (inputs.sulfonylurea_contraindicated) {
+        addUnique(avoid_classes, "sulfonylurea");
       }
 
       if (inputs.basal_insulin_contraindicated) {
@@ -1558,6 +1697,8 @@
         moveUpIfPresent("SGLT2i", preferred_classes, acceptable_classes);
         moveUpIfPresent("GLP1_RA", preferred_classes, acceptable_classes);
         moveUpIfPresent("dual_GIP_GLP1_RA", preferred_classes, acceptable_classes);
+        removeIfPresent("sulfonylurea", preferred_classes);
+        removeIfPresent("sulfonylurea", acceptable_classes);
 
         if (!severe_hyperglycemia) {
           moveDownIfPresent("basal_insulin", preferred_classes, acceptable_classes);
@@ -1569,6 +1710,11 @@
 
         moveUpIfPresent("metformin", preferred_classes, acceptable_classes);
         addUnique(acceptable_classes, "pioglitazone");
+        if (!inputs.on_sulfonylurea &&
+            !inputs.high_hypoglycemia_risk &&
+            !inputs.prioritize_hypoglycemia_avoidance) {
+          addUnique(acceptable_classes, "sulfonylurea");
+        }
 
         if (!has_cardiorenal_driver) {
           moveDownIfPresent("GLP1_RA", preferred_classes, acceptable_classes);
@@ -1594,6 +1740,12 @@
         if (!inputs.on_DPP4i && !inputs.on_GLP1_RA && !inputs.on_dual_GIP_GLP1_RA) {
           addUnique(acceptable_classes, "DPP4i");
         }
+
+        if (!inputs.on_sulfonylurea &&
+            !inputs.high_hypoglycemia_risk &&
+            !inputs.prioritize_hypoglycemia_avoidance) {
+          addUnique(acceptable_classes, "sulfonylurea");
+        }
       }
 
       if (inputs.on_GLP1_RA || inputs.on_dual_GIP_GLP1_RA) {
@@ -1616,6 +1768,7 @@
       if (inputs.on_GLP1_RA) currentClasses.push("GLP1_RA");
       if (inputs.on_dual_GIP_GLP1_RA) currentClasses.push("dual_GIP_GLP1_RA");
       if (inputs.on_DPP4i) currentClasses.push("DPP4i");
+      if (inputs.on_sulfonylurea) currentClasses.push("sulfonylurea");
       if (inputs.on_basal_insulin) currentClasses.push("basal_insulin");
 
       currentClasses.forEach((classId) => {
@@ -1639,6 +1792,11 @@
           preferred.push("SGLT2i");
         } else if (!inputs.on_GLP1_RA && !inputs.prefers_oral_only) {
           preferred.push("GLP1_RA");
+        } else if ((inputs.cost_barrier_present || inputs.prefers_oral_only) &&
+                   !inputs.on_sulfonylurea &&
+                   !inputs.high_hypoglycemia_risk &&
+                   !inputs.prioritize_hypoglycemia_avoidance) {
+          acceptable.push("sulfonylurea");
         } else {
           addUnique(rationale, "needs manual clinical review");
         }
@@ -1949,6 +2107,8 @@
           return "dual_GIP_GLP1_RA";
         case "DPP-4 inhibitor":
           return "DPP4i";
+        case "Sulfonylurea":
+          return "sulfonylurea";
         case "pioglitazone":
           return "pioglitazone";
         case "basal insulin":
@@ -1970,9 +2130,13 @@
         dual_gip_glp1_ra_intolerance: false,
         dpp4i_contraindicated: state.dpp4i_contraindicated,
         dpp4i_intolerance: false,
+        sulfonylurea_contraindicated: state.sulfonylurea_contraindicated,
+        sulfonylurea_intolerance: false,
         pioglitazone_contraindicated: state.pioglitazone_contraindicated,
         pioglitazone_intolerance: false,
         basal_insulin_contraindicated: state.basal_insulin_contraindicated,
+        high_hypoglycemia_risk: state.high_hypoglycemia_risk,
+        prioritize_hypoglycemia_avoidance: state.prioritize_hypoglycemia_avoidance,
         prefers_oral_only: state.prefers_oral_only,
         has_hf: state.has_HF,
         on_glp1_based_therapy: state.on_GLP1_RA || state.on_dual_GIP_GLP1_RA
@@ -1995,9 +2159,13 @@
         dual_gip_glp1_ra_intolerance: "Dual GIP/GLP-1 intolerance flag is present.",
         dpp4i_contraindicated: "DPP-4 inhibitors are marked contraindicated.",
         dpp4i_intolerance: "DPP-4 inhibitor intolerance flag is present.",
+        sulfonylurea_contraindicated: "Sulfonylureas are marked contraindicated.",
+        sulfonylurea_intolerance: "Sulfonylurea intolerance flag is present.",
         pioglitazone_contraindicated: "Pioglitazone is marked contraindicated.",
         pioglitazone_intolerance: "Pioglitazone intolerance flag is present.",
         basal_insulin_contraindicated: "Basal insulin is marked contraindicated.",
+        high_hypoglycemia_risk: "Higher hypoglycemia risk is present.",
+        prioritize_hypoglycemia_avoidance: "Hypoglycemia avoidance is a priority.",
         prefers_oral_only: "The patient prefers oral-only therapy.",
         has_hf: "Heart failure is present.",
         on_glp1_based_therapy: "The patient is already on GLP-1-based therapy."
