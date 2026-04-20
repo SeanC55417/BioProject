@@ -565,7 +565,7 @@
         stageKey: "cardiorenal",
         inputType: "choice",
         label: "Is albuminuria present?",
-        help: "Defined as albumin (urine/serum/ratio?) higher than",
+        help: "Defined as albumin (urine/serum/ratio?) 30 mg/g or higher",
         options: yesNoOptions,
         field: "albuminuria_present",
         visibleIf: isType2Case
