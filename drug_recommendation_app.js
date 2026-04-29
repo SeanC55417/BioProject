@@ -790,6 +790,7 @@
     let wizardSession = {
       answeredQuestionIds: [],
       questionHistory: [],
+      visitedQuestionIds: [],
       currentQuestionId: null
     };
 
@@ -995,6 +996,7 @@
       wizardSession = {
         answeredQuestionIds: Array.isArray(savedSession?.answeredQuestionIds) ? [...savedSession.answeredQuestionIds] : [],
         questionHistory: Array.isArray(savedSession?.questionHistory) ? [...savedSession.questionHistory] : [],
+        visitedQuestionIds: Array.isArray(savedSession?.visitedQuestionIds) ? [...savedSession.visitedQuestionIds] : [],
         currentQuestionId: savedSession?.currentQuestionId || null
       };
 
@@ -1017,6 +1019,7 @@
         state: normalizeState({ ...DEFAULT_STATE, ...state }),
         answeredQuestionIds: [],
         questionHistory: [],
+        visitedQuestionIds: [],
         currentQuestionId: getFirstVisibleQuestionId(normalizeState({ ...DEFAULT_STATE, ...state }))
       };
     }
@@ -1028,6 +1031,7 @@
         state: normalized,
         answeredQuestionIds: visibleIds,
         questionHistory: visibleIds,
+        visitedQuestionIds: visibleIds,
         currentQuestionId: null
       };
     }
@@ -1096,6 +1100,7 @@
       const visibleIds = getVisibleQuestions(state).map((question) => question.id);
       wizardSession.answeredQuestionIds = dedupe(wizardSession.answeredQuestionIds.filter((id) => visibleIds.includes(id)));
       wizardSession.questionHistory = dedupe(wizardSession.questionHistory.filter((id) => visibleIds.includes(id)));
+      wizardSession.visitedQuestionIds = dedupe(wizardSession.visitedQuestionIds.filter((id) => visibleIds.includes(id)));
 
       if (wizardSession.currentQuestionId && !visibleIds.includes(wizardSession.currentQuestionId)) {
         wizardSession.currentQuestionId = null;
@@ -1275,11 +1280,17 @@
       latestState = normalizeState(nextState);
       addUnique(wizardSession.answeredQuestionIds, question.id);
       addUnique(wizardSession.questionHistory, question.id);
+      addUnique(wizardSession.visitedQuestionIds, question.id);
       pruneWizardSession(latestState);
       const isUnlockedNow = isResultsUnlocked(latestState);
       wizardSession.currentQuestionId = isUnlockedNow && (wasUnlocked || wasAlreadyAnswered)
         ? getNextSequentialQuestionId(latestState, question.id)
         : getNextQuestionId(latestState, question.id);
+
+      if (wizardSession.currentQuestionId) {
+        addUnique(wizardSession.visitedQuestionIds, wizardSession.currentQuestionId);
+      }
+
       persistState();
       renderApplication(latestState);
 
@@ -1364,6 +1375,7 @@
         .filter((id) => wizardSession.answeredQuestionIds.includes(id));
       const totalQuestions = visibleQuestions.length;
       const answeredCount = answeredVisibleIds.length;
+      const mappedCount = getDisplayedPathIds(state, currentQuestion).length;
       const currentQuestionIndex = currentQuestion
         ? visibleQuestions.findIndex((question) => question.id === currentQuestion.id) + 1
         : Math.max(totalQuestions, 1);
@@ -1371,7 +1383,7 @@
 
       dom.wizardProgressFill.style.width = `${progressPercent}%`;
       dom.wizardStepCount.textContent = `${answeredCount} of ${totalQuestions} answered`;
-      dom.wizardPathCount.textContent = `${wizardSession.questionHistory.length} decision points mapped`;
+      dom.wizardPathCount.textContent = `${mappedCount} decision points mapped`;
 
       if (currentQuestion) {
         dom.wizardStageLabel.textContent = `${getStageLabel(currentQuestion.stageKey)} branch`;
@@ -1583,13 +1595,14 @@
     }
 
     function getDisplayedPathIds(state, currentQuestion) {
-      const visibleIds = getVisibleQuestions(state).map((question) => question.id);
-      const answeredIds = new Set([
+      const visibleIds = new Set(getVisibleQuestions(state).map((question) => question.id));
+      const orderedIds = [
         ...wizardSession.questionHistory,
-        ...wizardSession.answeredQuestionIds
-      ]);
+        ...wizardSession.answeredQuestionIds,
+        ...wizardSession.visitedQuestionIds
+      ];
 
-      return visibleIds.filter((id) => answeredIds.has(id));
+      return dedupe(orderedIds).filter((id) => visibleIds.has(id));
     }
 
     function queueCenteredActiveStep() {
