@@ -48,13 +48,14 @@
         fields: [
           {
             id: "diabetes_type",
-            type: "select",
-            label: "Diabetes type",
-            help: "The algorithm only supports type 2 diabetes.",
+            type: "multi",
+            label: "Diabetes type(s)",
+            help: "Select every option that fits this patient.",
             options: [
-              { value: "T2DM", label: "Type 2 diabetes" },
-              { value: "T1DM", label: "Type 1 diabetes" },
-              { value: "NA", label: "Not entered" }
+              { value: "T1DM", label: "Type 1 diabetes mellitus (T1DM)" },
+              { value: "T2DM", label: "Type 2 diabetes mellitus (T2DM)" },
+              { value: "gestational", label: "Gestational diabetes" },
+              { value: "other", label: "Other forms of diabetes" }
             ]
           },
           {
@@ -76,10 +77,19 @@
             step: 0.1
           },
           {
-            id: "random_glucose_mg_dl",
+            id: "fasting_glucose_mg_dl",
             type: "number",
-            label: "Random glucose (mg/dL)",
-            help: "Severe hyperglycemia branch fires at 300 mg/dL or higher.",
+            label: "Fasting glucose (mg/dL)",
+            help: "Fasting glucose helps assess basal control of the current regimen.",
+            min: 40,
+            max: 700,
+            step: 1
+          },
+          {
+            id: "postprandial_glucose_mg_dl",
+            type: "number",
+            label: "Postprandial glucose (mg/dL)",
+            help: "Postprandial glucose is the glucose level after a meal.",
             min: 40,
             max: 700,
             step: 1
@@ -148,7 +158,7 @@
           {
             id: "albuminuria_present",
             type: "checkbox",
-            help: "Defined as albumin (urine/serum/ratio?) 30 mg/g or higher.",
+            help: "Defined as urine albumin-to-creatinine ratio (ACR) ≥ 3.0 mg/mmol [30 mg/g].",
             label: "Albuminuria present",
             fullWidth: true
           }
@@ -321,11 +331,21 @@
 
     const DEFAULT_STATE = {
       diabetes_type: "T2DM",
+      diabetes_type_T1DM: false,
+      diabetes_type_T2DM: true,
+      diabetes_type_gestational: false,
+      diabetes_type_other: false,
+      patient_age_years: 55,
+      is_pregnant_or_planning: false,
+      bmi: 32.0,
       a1c_current_percent: 8.6,
       a1c_target_percent: 7.0,
-      random_glucose_mg_dl: 180,
+      no_a1c_goal: false,
+      fasting_glucose_mg_dl: 150,
+      postprandial_glucose_mg_dl: 210,
       symptomatic_hyperglycemia: false,
       catabolic_features_present: false,
+      has_ASCVD_or_high_risk: false,
       has_established_ASCVD: false,
       has_indicators_high_CVD_risk: false,
       has_HF: false,
@@ -334,8 +354,9 @@
       egfr_ml_min_1_73m2: 82,
       albuminuria_present: false,
       has_obesity: true,
-      weight_loss_goal_priority: true,
+      weight_loss_goal_priority: false,
       prioritize_weight_loss: false,
+      liver_condition: "none",
       has_MASLD: false,
       has_MASH: false,
       high_risk_liver_fibrosis: false,
@@ -363,11 +384,21 @@
 
     const DEMO_STATE = {
       diabetes_type: "T2DM",
+      diabetes_type_T1DM: false,
+      diabetes_type_T2DM: true,
+      diabetes_type_gestational: false,
+      diabetes_type_other: false,
+      patient_age_years: 64,
+      is_pregnant_or_planning: false,
+      bmi: 34.2,
       a1c_current_percent: 10.8,
       a1c_target_percent: 7.0,
-      random_glucose_mg_dl: 325,
+      no_a1c_goal: false,
+      fasting_glucose_mg_dl: 188,
+      postprandial_glucose_mg_dl: 325,
       symptomatic_hyperglycemia: true,
       catabolic_features_present: false,
+      has_ASCVD_or_high_risk: true,
       has_established_ASCVD: true,
       has_indicators_high_CVD_risk: false,
       has_HF: true,
@@ -376,8 +407,9 @@
       egfr_ml_min_1_73m2: 41,
       albuminuria_present: true,
       has_obesity: true,
-      weight_loss_goal_priority: true,
-      prioritize_weight_loss: true,
+      weight_loss_goal_priority: false,
+      prioritize_weight_loss: false,
+      liver_condition: "MASLD",
       has_MASLD: true,
       has_MASH: false,
       high_risk_liver_fibrosis: false,
@@ -405,6 +437,7 @@
 
     const WIZARD_STAGES = [
       { key: "scope", label: "Scope" },
+      { key: "demographics", label: "Demographics" },
       { key: "glycemia", label: "Glycemia" },
       { key: "cardiorenal", label: "Cardiorenal" },
       { key: "weight_liver", label: "Weight and Liver" },
@@ -418,22 +451,66 @@
       { label: "No", value: false }
     ];
 
+    const DIABETES_TYPE_OPTIONS = [
+      { key: "diabetes_type_T1DM", label: "Type 1 diabetes mellitus (T1DM)" },
+      { key: "diabetes_type_T2DM", label: "Type 2 diabetes mellitus (T2DM)" },
+      { key: "diabetes_type_gestational", label: "Gestational diabetes" },
+      { key: "diabetes_type_other", label: "Other forms of diabetes" }
+    ];
+
+    const LIVER_CONDITION_OPTIONS = [
+      { label: "None", value: "none" },
+      { label: "MASLD", value: "MASLD" },
+      { label: "MASH", value: "MASH" },
+      { label: "High liver fibrosis risk", value: "high_fibrosis_risk" }
+    ];
+
     const QUESTION_FLOW = [
       {
         id: "diabetes_type",
         stageKey: "scope",
+        inputType: "multi",
+        label: "What type(s) of diabetes does the patient have?",
+        help: "Select every option that fits this patient, then continue.",
+        options: DIABETES_TYPE_OPTIONS
+      },
+      {
+        id: "patient_age_years",
+        stageKey: "demographics",
+        inputType: "number",
+        label: "What is the patient’s age?",
+        help: "Age may influence glycemic targets, hypoglycemia risk, and medication selection.",
+        min: 19,
+        max: 99,
+        step: 1,
+        suffix: "years",
+        lowLabel: "19",
+        highLabel: "99+",
+        integerOnly: true,
+        visibleIf: hasType2Selection
+      },
+      {
+        id: "is_pregnant_or_planning",
+        stageKey: "demographics",
         inputType: "choice",
-        label: "What condition is being evaluated?",
-        help: "This simplified algorithm only continues for type 2 diabetes.",
-        options: [
-          { label: "Type 2 diabetes", value: "T2DM" },
-          { label: "Heart Disease", value: "Heart" },
-          { label: "Other", value: "NA" },
-          { label: "Other", value: "NA" }
-        ],
-        apply(state, value) {
-          state.diabetes_type = value;
-        }
+        label: "Is the patient pregnant or planning pregnancy?",
+        help: "Pregnancy significantly impacts medication safety and regimen selection.",
+        options: yesNoOptions,
+        field: "is_pregnant_or_planning",
+        visibleIf: hasType2Selection
+      },
+      {
+        id: "bmi",
+        stageKey: "demographics",
+        inputType: "number",
+        label: "What is the patient’s BMI?",
+        help: "Weight status may guide selection of agents with weight loss, neutrality, or gain effects.",
+        min: 10,
+        max: 80,
+        step: 0.1,
+        suffix: "kg/m²",
+        sectionLabel: "Weight and metabolic considerations",
+        visibleIf: isType2Case
       },
       {
         id: "a1c_current_percent",
@@ -445,6 +522,8 @@
         max: 18,
         step: 0.1,
         suffix: "%",
+        lowLabel: "≤4",
+        highLabel: "≥18",
         visibleIf: isType2Case
       },
       {
@@ -453,18 +532,32 @@
         inputType: "number",
         label: "What is the A1C target for this patient?",
         help: "The A1c target should be tailored to the individual through shared-decision making.",
-        min: 5,
+        min: 5.7,
         max: 10,
         step: 0.1,
         suffix: "%",
+        lowLabel: "≤5.7",
+        specialAction: "no-a1c-goal",
         visibleIf: isType2Case
       },
       {
-        id: "random_glucose_mg_dl",
+        id: "fasting_glucose_mg_dl",
         stageKey: "glycemia",
         inputType: "number",
-        label: "What is the random glucose?",
-        help: "A value of 300 mg/dL or higher contributes to the urgent branch.",
+        label: "What is the patient’s fasting glucose level?",
+        help: "Fasting glucose helps assess basal control of the current regimen.",
+        min: 40,
+        max: 700,
+        step: 1,
+        suffix: "mg/dL",
+        visibleIf: isType2Case
+      },
+      {
+        id: "postprandial_glucose_mg_dl",
+        stageKey: "glycemia",
+        inputType: "number",
+        label: "What is the patient’s postprandial glucose level?",
+        help: "Postprandial glucose is the glucose level after a meal and helps assess mealtime glucose excursions.",
         min: 40,
         max: 700,
         step: 1,
@@ -492,23 +585,17 @@
         visibleIf: isType2Case
       },
       {
-        id: "has_established_ASCVD",
+        id: "has_ASCVD_or_high_risk",
         stageKey: "cardiorenal",
         inputType: "choice",
-        label: "Is there established ASCVD?",
-        help: "ASCVD refers to a history of ACS, MI, stroke, arterial revascularization, …",
+        label: "Is established ASCVD or high ASCVD risk present?",
+        help: "ASCVD includes ACS, MI, stroke, arterial revascularization.",
         options: yesNoOptions,
-        field: "has_established_ASCVD",
-        visibleIf: isType2Case
-      },
-      {
-        id: "has_indicators_high_CVD_risk",
-        stageKey: "cardiorenal",
-        inputType: "choice",
-        label: "Are there indicators of high cardiovascular risk?",
-        help: "Key risk factors include hypertension, dyslipidemia, hyperglycemia, and obesity.",
-        options: yesNoOptions,
-        field: "has_indicators_high_CVD_risk",
+        apply(state, value) {
+          state.has_ASCVD_or_high_risk = value;
+          state.has_established_ASCVD = value;
+          state.has_indicators_high_CVD_risk = value;
+        },
         visibleIf: isType2Case
       },
       {
@@ -565,25 +652,24 @@
         stageKey: "cardiorenal",
         inputType: "choice",
         label: "Is albuminuria present?",
-        help: "Defined as albumin (urine/serum/ratio?) 30 mg/g or higher",
+        help: "Defined as urine albumin-to-creatinine ratio (ACR) ≥ 3.0 mg/mmol [30 mg/g].",
         options: yesNoOptions,
         field: "albuminuria_present",
         visibleIf: isType2Case
       },
       {
-        id: "weight_liver_flags",
+        id: "liver_condition",
         stageKey: "weight_liver",
-        inputType: "multi",
-        label: "Which weight or liver factors apply?",
-        help: "Select every option that fits this patient, then continue.",
-        options: [
-          { key: "has_obesity", label: "Obesity present" },
-          { key: "weight_loss_goal_priority", label: "Weight loss is an explicit goal" },
-          { key: "prioritize_weight_loss", label: "Prioritize weight loss" },
-          { key: "has_MASLD", label: "MASLD present" },
-          { key: "has_MASH", label: "MASH present" },
-          { key: "high_risk_liver_fibrosis", label: "High liver fibrosis risk" }
-        ],
+        inputType: "choice",
+        label: "Are any of these liver conditions present?",
+        help: "Select the single best answer, then continue.",
+        options: LIVER_CONDITION_OPTIONS,
+        apply(state, value) {
+          state.liver_condition = value;
+          state.has_MASLD = value === "MASLD";
+          state.has_MASH = value === "MASH";
+          state.high_risk_liver_fibrosis = value === "high_fibrosis_risk";
+        },
         visibleIf: isType2Case
       },
       {
@@ -713,7 +799,10 @@
     showDisclaimerModal();
 
     function bindStaticEvents() {
-      dom.demoBtn.addEventListener("click", () => hydrateSession(createCompletedSession(DEMO_STATE)));
+      dom.demoBtn.addEventListener("click", () => {
+        hydrateSession(createCompletedSession(DEMO_STATE));
+        switchTab("tab-results");
+      });
       dom.resetBtn.addEventListener("click", () => hydrateSession(createFreshSession(DEFAULT_STATE)));
       dom.jumpToResultsTopBtn.addEventListener("click", () => switchTab("tab-results"));
       dom.backToQuestionsBtn.addEventListener("click", () => switchTab("tab-intake"));
@@ -736,6 +825,17 @@
       });
 
       dom.questionInputArea.addEventListener("click", (event) => {
+        const actionButton = event.target.closest("[data-question-action]");
+        if (actionButton) {
+          const currentQuestion = getCurrentQuestion(latestState);
+          if (currentQuestion?.id === "a1c_target_percent" &&
+              actionButton.dataset.questionAction === "no-a1c-goal") {
+            const nextState = { ...latestState, no_a1c_goal: true };
+            commitQuestionAnswer(currentQuestion, nextState);
+          }
+          return;
+        }
+
         const choiceButton = event.target.closest("[data-option-index]");
         if (!choiceButton) {
           return;
@@ -759,6 +859,16 @@
         const nextState = { ...latestState };
         applyQuestionAnswer(currentQuestion, nextState, option.value);
         commitQuestionAnswer(currentQuestion, nextState);
+      });
+
+      dom.questionInputArea.addEventListener("input", (event) => {
+        const input = event.target.closest("#wizard-number-input");
+        const currentQuestion = getCurrentQuestion(latestState);
+        if (!input || !currentQuestion?.integerOnly) {
+          return;
+        }
+
+        input.value = input.value.match(/^\d+/)?.[0] || "";
       });
 
       dom.questionInputArea.addEventListener("keydown", (event) => {
@@ -924,6 +1034,41 @@
 
     function normalizeState(state) {
       const nextState = { ...DEFAULT_STATE, ...state };
+      const hasAnyDiabetesType = DIABETES_TYPE_OPTIONS.some((option) => Boolean(nextState[option.key]));
+
+      if (!hasAnyDiabetesType) {
+        nextState.diabetes_type = "NA";
+      } else if (nextState.diabetes_type_T2DM) {
+        nextState.diabetes_type = "T2DM";
+      } else if (nextState.diabetes_type_T1DM) {
+        nextState.diabetes_type = "T1DM";
+      } else if (nextState.diabetes_type_gestational) {
+        nextState.diabetes_type = "gestational";
+      } else {
+        nextState.diabetes_type = "other";
+      }
+
+      nextState.patient_age_years = clamp(toInteger(nextState.patient_age_years, DEFAULT_STATE.patient_age_years), 19, 99);
+      nextState.bmi = clamp(toNumber(nextState.bmi, DEFAULT_STATE.bmi), 10, 80);
+      nextState.has_obesity = nextState.bmi >= 30;
+      nextState.weight_loss_goal_priority = false;
+      nextState.prioritize_weight_loss = false;
+
+      if (nextState.liver_condition === "MASH") {
+        nextState.has_MASH = true;
+      } else if (nextState.liver_condition === "high_fibrosis_risk") {
+        nextState.high_risk_liver_fibrosis = true;
+      } else if (nextState.liver_condition === "MASLD") {
+        nextState.has_MASLD = true;
+      } else if (nextState.has_MASH) {
+        nextState.liver_condition = "MASH";
+      } else if (nextState.high_risk_liver_fibrosis) {
+        nextState.liver_condition = "high_fibrosis_risk";
+      } else if (nextState.has_MASLD) {
+        nextState.liver_condition = "MASLD";
+      } else {
+        nextState.liver_condition = "none";
+      }
 
       if (!nextState.has_HF) {
         nextState.HF_type = "NA";
@@ -937,6 +1082,12 @@
       if (nextState.has_MASH) {
         nextState.has_MASLD = true;
       }
+
+      nextState.has_ASCVD_or_high_risk = Boolean(nextState.has_ASCVD_or_high_risk) ||
+        Boolean(nextState.has_established_ASCVD) ||
+        Boolean(nextState.has_indicators_high_CVD_risk);
+      nextState.has_established_ASCVD = Boolean(nextState.has_ASCVD_or_high_risk);
+      nextState.has_indicators_high_CVD_risk = Boolean(nextState.has_ASCVD_or_high_risk);
 
       return nextState;
     }
@@ -956,8 +1107,12 @@
       }
     }
 
+    function hasType2Selection(state) {
+      return Boolean(state.diabetes_type_T2DM);
+    }
+
     function isType2Case(state) {
-      return state.diabetes_type === "T2DM";
+      return hasType2Selection(state) && !state.is_pregnant_or_planning;
     }
 
     function getVisibleQuestions(state) {
@@ -967,6 +1122,15 @@
         }
         return true;
       });
+    }
+
+    function getVisibleQuestionIds(state) {
+      return getVisibleQuestions(state).map((question) => question.id);
+    }
+
+    function areAllVisibleQuestionsAnswered(state) {
+      const visibleIds = getVisibleQuestionIds(state);
+      return visibleIds.length > 0 && visibleIds.every((id) => wizardSession.answeredQuestionIds.includes(id));
     }
 
     function getFirstVisibleQuestionId(state) {
@@ -991,23 +1155,32 @@
       return nextQuestion;
     }
 
-    function getNextQuestionId(state, fromQuestionId = null) {
+    function getNextQuestionId(state, fromQuestionId = null, options = {}) {
       const visibleQuestions = getVisibleQuestions(state);
       if (!visibleQuestions.length) {
         return null;
       }
 
       const answered = new Set(wizardSession.answeredQuestionIds);
+      const includeAnswered = Boolean(options.includeAnswered);
       if (fromQuestionId) {
         const currentIndex = visibleQuestions.findIndex((question) => question.id === fromQuestionId);
         for (let index = currentIndex + 1; index < visibleQuestions.length; index += 1) {
-          if (!answered.has(visibleQuestions[index].id)) {
+          if (includeAnswered || !answered.has(visibleQuestions[index].id)) {
             return visibleQuestions[index].id;
           }
         }
       }
 
+      if (includeAnswered) {
+        return null;
+      }
+
       return visibleQuestions.find((question) => !answered.has(question.id))?.id || null;
+    }
+
+    function getNextSequentialQuestionId(state, fromQuestionId) {
+      return getNextQuestionId(state, fromQuestionId, { includeAnswered: true });
     }
 
     function getPreviousQuestionId(state) {
@@ -1074,7 +1247,17 @@
       }
 
       if (question.inputType === "number") {
-        state[question.id] = toNumber(value, DEFAULT_STATE[question.id] ?? 0);
+        if (question.id === "a1c_target_percent" && state.no_a1c_goal && String(value).trim() === "") {
+          return;
+        }
+        const fallback = DEFAULT_STATE[question.id] ?? 0;
+        const parsedValue = question.integerOnly
+          ? toInteger(value, fallback)
+          : toNumber(value, fallback);
+        state[question.id] = clamp(parsedValue, question.min, question.max);
+        if (question.id === "a1c_target_percent") {
+          state.no_a1c_goal = false;
+        }
         return;
       }
 
@@ -1087,15 +1270,20 @@
     }
 
     function commitQuestionAnswer(question, nextState) {
+      const wasUnlocked = isResultsUnlocked(latestState);
+      const wasAlreadyAnswered = wizardSession.answeredQuestionIds.includes(question.id);
       latestState = normalizeState(nextState);
       addUnique(wizardSession.answeredQuestionIds, question.id);
       addUnique(wizardSession.questionHistory, question.id);
       pruneWizardSession(latestState);
-      wizardSession.currentQuestionId = getNextQuestionId(latestState, question.id);
+      const isUnlockedNow = isResultsUnlocked(latestState);
+      wizardSession.currentQuestionId = isUnlockedNow && (wasUnlocked || wasAlreadyAnswered)
+        ? getNextSequentialQuestionId(latestState, question.id)
+        : getNextQuestionId(latestState, question.id);
       persistState();
       renderApplication(latestState);
 
-      if (wizardSession.currentQuestionId === null && latestResult?.status === "ok") {
+      if (!wasUnlocked && wizardSession.currentQuestionId === null && latestResult?.status === "ok") {
         switchTab("tab-results");
       }
     }
@@ -1133,6 +1321,9 @@
       }
 
       if (question.inputType === "number") {
+        if (question.id === "a1c_target_percent" && state.no_a1c_goal) {
+          return "No A1C goal";
+        }
         return `${currentValue} ${question.suffix || ""}`.trim();
       }
 
@@ -1151,7 +1342,7 @@
       const result = recommendTherapy(state);
       latestState = { ...state };
       latestResult = result;
-      renderResultAccessState(currentQuestion === null);
+      renderResultAccessState(isResultsUnlocked(state));
       renderFlowchart(state, result, currentQuestion);
       renderWizard(state, result, currentQuestion);
       updateCounts(result);
@@ -1208,9 +1399,10 @@
       dom.questionHistoryList.innerHTML = pathIds.map((id, index) => {
         const question = QUESTION_LOOKUP[id];
         const answerSummary = getQuestionAnswerSummary(question, state);
+        const isCurrent = currentQuestion?.id === id;
         return `
           <article
-            class="question-history-card is-jumpable ${index === pathIds.length - 1 ? "is-latest" : ""}"
+            class="question-history-card is-jumpable ${isCurrent ? "is-current" : ""} ${!isCurrent && index === pathIds.length - 1 ? "is-latest" : ""}"
             data-question-jump="${id}"
             role="button"
             tabindex="0"
@@ -1239,7 +1431,7 @@
         dom.questionHelp.textContent = result.status === "ok"
           ? "The recommendations tab is now unlocked. You can review it or go back to revise earlier answers."
           : "Use Back to revise the scope answer if you want to continue the type 2 diabetes pathway.";
-        dom.questionInputArea.innerHTML = renderCompletionPreview(result);
+        dom.questionInputArea.innerHTML = `${renderScopeNotice(state)}${renderCompletionPreview(result)}`;
         dom.advanceQuestionBtn.hidden = true;
         dom.backQuestionBtn.disabled = !getPreviousQuestionId(state);
         return;
@@ -1247,10 +1439,10 @@
 
       dom.questionCard.classList.remove("is-complete");
       dom.questionCard.classList.add("is-current");
-      dom.questionStage.textContent = `${getStageLabel(question.stageKey)} • Question ${questionIndex} of ${totalQuestions}`;
+      dom.questionStage.textContent = `${question.sectionLabel || getStageLabel(question.stageKey)} • Question ${questionIndex} of ${totalQuestions}`;
       dom.questionTitle.textContent = question.label;
       dom.questionHelp.textContent = question.help || "Answer this branch point to continue.";
-      dom.questionInputArea.innerHTML = renderQuestionInput(question, state);
+      dom.questionInputArea.innerHTML = `${renderScopeNotice(state)}${renderQuestionInput(question, state)}`;
       dom.advanceQuestionBtn.hidden = question.inputType === "choice";
       dom.advanceQuestionBtn.textContent = "Continue";
       dom.backQuestionBtn.disabled = !getPreviousQuestionId(state);
@@ -1288,19 +1480,43 @@
 
       if (question.inputType === "number") {
         const currentValue = getQuestionCurrentValue(question, state);
+        const isNoA1cGoal = question.id === "a1c_target_percent" && state.no_a1c_goal;
+        const boundaryMarkup = question.lowLabel || question.highLabel
+          ? `
+            <div class="number-boundary-row" aria-hidden="true">
+              <span>${question.lowLabel || ""}</span>
+              <span>${question.highLabel || ""}</span>
+            </div>
+          `
+          : "";
+        const noGoalMarkup = question.specialAction === "no-a1c-goal"
+          ? `
+            <div class="number-extra-actions">
+              <button
+                class="ghost-btn no-goal-btn ${isNoA1cGoal ? "is-selected" : ""}"
+                type="button"
+                data-question-action="no-a1c-goal">
+                No A1C goal
+              </button>
+            </div>
+          `
+          : "";
         return `
           <div class="number-question-shell">
             <label class="question-field-label" for="wizard-number-input">Enter value</label>
             <div class="number-input-wrap">
               <input
                 id="wizard-number-input"
-                type="number"
+                type="${question.integerOnly ? "text" : "number"}"
                 min="${question.min}"
                 max="${question.max}"
                 step="${question.step}"
-                value="${currentValue}">
+                ${question.integerOnly ? "inputmode=\"numeric\" pattern=\"[0-9]*\"" : ""}
+                value="${isNoA1cGoal ? "" : currentValue}">
               <span>${question.suffix || ""}</span>
             </div>
+            ${boundaryMarkup}
+            ${noGoalMarkup}
             <p class="question-caption">Use Continue to move to the next decision point.</p>
           </div>
         `;
@@ -1318,6 +1534,27 @@
         </div>
         <p class="question-caption">Select all that apply, then continue.</p>
       `;
+    }
+
+    function renderScopeNotice(state) {
+      const message = getScopeDevelopmentMessage(state);
+      return message ? `<div class="scope-notice">${message}</div>` : "";
+    }
+
+    function getScopeDevelopmentMessage(state) {
+      if (state.is_pregnant_or_planning) {
+        return "Gestational diabetes decision support is currently in development and will be included in a future update. Current functionality is limited to Type 2 diabetes mellitus (T2DM) without pregnancy.";
+      }
+
+      const selectedNonType2Labels = DIABETES_TYPE_OPTIONS
+        .filter((option) => option.key !== "diabetes_type_T2DM" && state[option.key])
+        .map((option) => option.label);
+
+      if (!selectedNonType2Labels.length) {
+        return "";
+      }
+
+      return `Decision support for ${joinLabels(selectedNonType2Labels)} is currently in development and will be included in a future update. Current functionality is limited to Type 2 diabetes mellitus (T2DM).`;
     }
 
     function renderCompletionPreview(result) {
@@ -1347,10 +1584,12 @@
 
     function getDisplayedPathIds(state, currentQuestion) {
       const visibleIds = getVisibleQuestions(state).map((question) => question.id);
-      const currentIndex = currentQuestion ? visibleIds.indexOf(currentQuestion.id) : visibleIds.length;
-      return visibleIds.filter((id, index) => {
-        return index < currentIndex && wizardSession.questionHistory.includes(id);
-      });
+      const answeredIds = new Set([
+        ...wizardSession.questionHistory,
+        ...wizardSession.answeredQuestionIds
+      ]);
+
+      return visibleIds.filter((id) => answeredIds.has(id));
     }
 
     function queueCenteredActiveStep() {
@@ -1400,7 +1639,7 @@
     }
 
     function isResultsUnlocked(state = latestState) {
-      return getCurrentQuestion(state) === null;
+      return areAllVisibleQuestionsAnswered(state);
     }
 
     function renderFlowchart(state, result, currentQuestion) {
@@ -1424,9 +1663,11 @@
       pathIds.forEach((id, index) => {
         const question = QUESTION_LOOKUP[id];
         const answerSummary = getQuestionAnswerSummary(question, state);
+        const isCurrent = currentQuestion?.id === id;
         pathMarkup.push(`
           <article
-            class="flow-path-node is-answered is-jumpable"
+            class="flow-path-node is-answered ${isCurrent ? "is-current" : "is-jumpable"}"
+            ${isCurrent ? "id=\"current-flow-node\"" : ""}
             data-question-jump="${id}"
             role="button"
             tabindex="0"
@@ -1437,13 +1678,13 @@
           </article>
         `);
 
-        const hasNextNode = index < pathIds.length - 1 || Boolean(currentQuestion);
+        const hasNextNode = index < pathIds.length - 1 || Boolean(currentQuestion && !pathIds.includes(currentQuestion.id));
         if (hasNextNode) {
           pathMarkup.push(renderFlowConnector(answerSummary));
         }
       });
 
-      if (currentQuestion) {
+      if (currentQuestion && !pathIds.includes(currentQuestion.id)) {
         pathMarkup.push(`
           <article class="flow-path-node is-current" id="current-flow-node">
             <span class="flow-kicker">${getStageLabel(currentQuestion.stageKey)}</span>
@@ -1451,7 +1692,7 @@
             <p>${currentQuestion.help || "Answer this branch point to continue the pathway."}</p>
           </article>
         `);
-      } else {
+      } else if (!currentQuestion || areAllVisibleQuestionsAnswered(state)) {
         const completeTone = result.status === "ok" ? "is-complete" : "is-warning";
         pathMarkup.push(renderFlowConnector(result.status === "ok" ? "Path complete" : "Needs correction"));
         pathMarkup.push(`
@@ -1477,6 +1718,8 @@
     }
 
     function recommendTherapy(inputs) {
+      const scopeDevelopmentMessage = getScopeDevelopmentMessage(inputs);
+
       if (inputs.diabetes_type === "NA") {
         return {
           status: "error",
@@ -1489,10 +1732,10 @@
         };
       }
 
-      if (inputs.diabetes_type === "T1DM") {
+      if (inputs.is_pregnant_or_planning) {
         return {
           status: "redirect",
-          message: "Out of scope: this simplified tool is limited to type 2 diabetes.",
+          message: scopeDevelopmentMessage,
           preferred_classes: [],
           acceptable_classes: [],
           avoid_classes: [],
@@ -1501,10 +1744,10 @@
         };
       }
 
-      if (inputs.diabetes_type !== "T2DM") {
+      if (!inputs.diabetes_type_T2DM) {
         return {
-          status: "error",
-          message: "Unsupported diabetes type.",
+          status: "redirect",
+          message: scopeDevelopmentMessage || "Current functionality is limited to Type 2 diabetes mellitus (T2DM).",
           preferred_classes: [],
           acceptable_classes: [],
           avoid_classes: [],
@@ -1518,13 +1761,12 @@
       const avoid_classes = [];
       const rationale = [];
 
-      const a1c_gap = roundToOne(inputs.a1c_current_percent - inputs.a1c_target_percent);
-      const above_a1c_goal = inputs.a1c_current_percent > inputs.a1c_target_percent;
+      const a1c_gap = inputs.no_a1c_goal ? null : roundToOne(inputs.a1c_current_percent - inputs.a1c_target_percent);
+      const above_a1c_goal = !inputs.no_a1c_goal && inputs.a1c_current_percent > inputs.a1c_target_percent;
       const severe_hyperglycemia =
         Boolean(inputs.symptomatic_hyperglycemia) ||
         Boolean(inputs.catabolic_features_present) ||
-        inputs.a1c_current_percent > 10.0 ||
-        inputs.random_glucose_mg_dl >= 300;
+        inputs.a1c_current_percent > 10.0;
 
       const has_cardiorenal_driver =
         Boolean(inputs.has_established_ASCVD) ||
@@ -1635,7 +1877,7 @@
       }
 
       if (inputs.has_obesity || inputs.weight_loss_goal_priority || inputs.prioritize_weight_loss) {
-        addUnique(rationale, "weight loss priority present");
+        addUnique(rationale, "weight or metabolic consideration present");
 
         if (!inputs.on_dual_GIP_GLP1_RA) {
           addUnique(preferred_classes, "dual_GIP_GLP1_RA");
@@ -1668,6 +1910,10 @@
         }
 
         addUnique(acceptable_classes, "pioglitazone");
+      }
+
+      if (inputs.no_a1c_goal) {
+        addUnique(rationale, "no A1C goal selected");
       }
 
       if (above_a1c_goal) {
@@ -1804,17 +2050,21 @@
 
       const derived_flags = {
         a1c_gap,
+        no_a1c_goal: Boolean(inputs.no_a1c_goal),
         above_a1c_goal,
         severe_hyperglycemia,
         has_cardiorenal_driver,
         has_CKD,
         advanced_CKD,
-        SGLT2_low_glycemic_effect
+        SGLT2_low_glycemic_effect,
+        marked_fasting_glucose_elevation: inputs.fasting_glucose_mg_dl >= 250,
+        marked_postprandial_glucose_elevation: inputs.postprandial_glucose_mg_dl >= 300,
+        scopeDevelopmentMessage
       };
 
       return {
         status: "ok",
-        message: "Algorithm completed for type 2 diabetes.",
+        message: scopeDevelopmentMessage || "Algorithm completed for type 2 diabetes.",
         preferred_classes: preferred,
         acceptable_classes: acceptable,
         avoid_classes: avoid,
@@ -1840,6 +2090,10 @@
       } else if (result.status === "error") {
         tone = "danger";
         title = "Cannot run algorithm";
+      } else if (result.derived_flags?.scopeDevelopmentMessage) {
+        tone = "warning";
+        title = "Limited scope";
+        message = result.derived_flags.scopeDevelopmentMessage;
       } else if (result.derived_flags?.severe_hyperglycemia) {
         tone = "warning";
         title = "Urgent branch triggered";
@@ -1922,11 +2176,15 @@
       const flags = [];
       const derived = result.derived_flags || {};
 
-      if (derived.a1c_gap !== undefined) {
+      if (derived.no_a1c_goal) {
+        flags.push("No A1C goal selected");
+      } else if (derived.a1c_gap !== undefined && derived.a1c_gap !== null) {
         flags.push(`A1C gap: ${formatGap(derived.a1c_gap)}%`);
       }
       if (derived.above_a1c_goal) flags.push("Above A1C goal");
       if (derived.severe_hyperglycemia) flags.push("Severe hyperglycemia");
+      if (derived.marked_fasting_glucose_elevation) flags.push("Marked fasting glucose elevation");
+      if (derived.marked_postprandial_glucose_elevation) flags.push("Marked postprandial glucose elevation");
       if (derived.has_cardiorenal_driver) flags.push("Cardiorenal driver present");
       if (derived.has_CKD) flags.push("CKD present");
       if (derived.advanced_CKD) flags.push("Advanced CKD");
@@ -2219,6 +2477,32 @@
     function toNumber(value, fallback) {
       const parsed = Number(value);
       return Number.isFinite(parsed) ? parsed : fallback;
+    }
+
+    function toInteger(value, fallback) {
+      const parsed = Number.parseInt(String(value), 10);
+      return Number.isFinite(parsed) ? parsed : fallback;
+    }
+
+    function clamp(value, min, max) {
+      let nextValue = value;
+      if (Number.isFinite(min)) {
+        nextValue = Math.max(min, nextValue);
+      }
+      if (Number.isFinite(max)) {
+        nextValue = Math.min(max, nextValue);
+      }
+      return nextValue;
+    }
+
+    function joinLabels(labels) {
+      if (labels.length <= 1) {
+        return labels[0] || "";
+      }
+      if (labels.length === 2) {
+        return `${labels[0]} and ${labels[1]}`;
+      }
+      return `${labels.slice(0, -1).join(", ")}, and ${labels[labels.length - 1]}`;
     }
 
     function roundToOne(value) {
