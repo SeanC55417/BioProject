@@ -26,10 +26,10 @@
     <section class="hero">
       <div class="hero-grid">
         <div>
-          <span class="eyebrow">ADA 2026 Simplified Translation</span>
-          <h2>Type 2 Diabetes Drug Recommender</h2>
+          <span class="eyebrow">EHR Copilot Panel</span>
+          <h2>Diabetes Treatment Recommendations</h2>
           <p>
-            Use this clinician support tool to walk through a simplified ADA 2026 treatment pathway for type 2 diabetes and compare glucose-lowering classes based on patient-specific factors. Recommendations should always be interpreted in clinical context.
+            Auto-populated clinical decision support that analyzes structured patient data, ranks glucose-lowering treatment classes, and keeps manual refinement available as a secondary workflow. Recommendations should always be interpreted in clinical context.
           </p>
         </div>
         
@@ -38,15 +38,15 @@
 
     <section class="tabs-shell">
       <div class="tabs-bar" role="tablist" aria-label="Application sections">
-        <button class="tab-btn is-active" id="tab-button-intake" type="button" role="tab" aria-selected="true" aria-controls="tab-intake" data-tab-target="tab-intake">
-          1. Flowchart and Questions
+        <button class="tab-btn is-active" id="tab-button-results" type="button" role="tab" aria-selected="true" aria-controls="tab-results" data-tab-target="tab-results">
+          1. Recommendations
         </button>
-        <button class="tab-btn" id="tab-button-results" type="button" role="tab" aria-selected="false" aria-controls="tab-results" data-tab-target="tab-results">
-          2. Recommendations and Comparison
+        <button class="tab-btn" id="tab-button-intake" type="button" role="tab" aria-selected="false" aria-controls="tab-intake" data-tab-target="tab-intake">
+          2. Refinement Mode
         </button>
       </div>
 
-      <section class="tab-panel is-active" id="tab-intake" role="tabpanel" aria-labelledby="tab-button-intake">
+      <section class="tab-panel" id="tab-intake" role="tabpanel" aria-labelledby="tab-button-intake" hidden>
         <div class="intake-grid">
           <section class="panel flow-panel">
             <div class="panel-heading">
@@ -69,11 +69,11 @@
             <div class="panel-heading">
               <div>
                 <h2>Guided Decision Tree</h2>
-                <p>Answer one prompt at a time. Each answer advances the intake path and updates the recommendation board in the background.</p>
+                <p>Optional refinement mode lets clinicians edit detected variables, add missing inputs, and review the decision pathway.</p>
               </div>
               <div class="toolbar">
-                <button class="ghost-btn" id="demo-btn" type="button">Load demo case</button>
-                <button class="accent-btn" id="reset-btn" type="button">Reset to defaults</button>
+                <button class="ghost-btn" id="demo-btn" type="button">Load sample EHR case</button>
+                <button class="accent-btn" id="reset-btn" type="button">Restart refinement</button>
               </div>
             </div>
 
@@ -111,19 +111,26 @@
         </div>
       </section>
 
-      <section class="tab-panel" id="tab-results" role="tabpanel" aria-labelledby="tab-button-results" hidden>
+      <section class="tab-panel is-active" id="tab-results" role="tabpanel" aria-labelledby="tab-button-results">
         <section class="panel results-panel" aria-live="polite">
           <div class="panel-heading">
             <div>
               <h2>Recommendation Board</h2>
-              <p>Class-level ranking is shown first, then example drugs from the medication catalog.</p>
+              <p>Auto-generated from structured EHR data. Class-level ranking is shown first, then example drugs from the medication catalog.</p>
             </div>
             <div class="toolbar">
-              <button class="ghost-btn" id="back-to-questions-btn" type="button">Back to questions</button>
+              <label class="ghost-btn file-upload-btn" for="ehr-upload-input">Upload EHR JSON</label>
+              <input class="visually-hidden" id="ehr-upload-input" type="file" accept=".json,application/json">
+              <span class="upload-status" id="ehr-upload-status" role="status">Sample EHR loaded</span>
+              <button class="ghost-btn" id="back-to-questions-btn" type="button">Refine variables</button>
             </div>
           </div>
 
           <div class="summary-strip" id="summary-strip">
+            <div class="mini-stat">
+              <strong>EHR Data</strong>
+              <span class="status-word" id="data-completeness-summary">Checking</span>
+            </div>
             <div class="mini-stat">
               <strong>Preferred</strong>
               <span id="preferred-count">0</span>
@@ -169,18 +176,39 @@
             </section>
           </div>
 
-          <div class="insight-grid">
-            <section class="insight-card">
-              <h3>Why the algorithm landed here</h3>
-              <p>These rationale tags are pulled directly from the decision branches that fired.</p>
-              <div class="rationale-row" id="rationale-row"></div>
-            </section>
-            <section class="insight-card">
-              <h3>Derived flags</h3>
-              <p>Quick reads of the patient profile that steer major branches like CKD, cardiorenal disease, and severe hyperglycemia.</p>
-              <div class="flag-row" id="flag-row"></div>
-            </section>
-          </div>
+          <details class="explanation-shell" open>
+            <summary>
+              <span>Rationale and Patient Data</span>
+              <small>Transparent reasoning from mapped EHR variables</small>
+            </summary>
+            <div class="insight-grid">
+              <section class="insight-card">
+                <h3>Why the algorithm landed here</h3>
+                <p>These rationale tags are pulled directly from the decision branches that fired.</p>
+                <div class="rationale-row" id="rationale-row"></div>
+              </section>
+              <section class="insight-card">
+                <h3>Clinical insights</h3>
+                <p>High-signal alerts generated from the current patient profile.</p>
+                <div class="clinical-insight-list" id="clinical-insight-list"></div>
+              </section>
+              <section class="insight-card">
+                <h3>Data confidence</h3>
+                <p>Completeness, outdated labs, missing inputs, and conflicts from the EHR extract.</p>
+                <div class="data-quality-list" id="data-quality-list"></div>
+              </section>
+              <section class="insight-card">
+                <h3>Contributing patient data</h3>
+                <p>Key mapped variables used by the recommendation engine.</p>
+                <div class="patient-evidence-grid" id="patient-evidence-grid"></div>
+              </section>
+              <section class="insight-card">
+                <h3>Derived flags</h3>
+                <p>Quick reads of the patient profile that steer major branches like CKD, cardiorenal disease, and severe hyperglycemia.</p>
+                <div class="flag-row" id="flag-row"></div>
+              </section>
+            </div>
+          </details>
 
           <section class="compare-shell">
             <div class="compare-header">

@@ -5,6 +5,11 @@
       throw error;
     });
 
+    const PATIENT_DATA = await loadPatientData().catch((error) => {
+      showInitializationError(error);
+      throw error;
+    });
+
     const CLASS_META = {
       metformin: {
         label: "Metformin",
@@ -336,11 +341,14 @@
       diabetes_type_gestational: false,
       diabetes_type_other: false,
       patient_age_years: 55,
+      patient_sex: "unknown",
       is_pregnant_or_planning: false,
+      weight_kg: null,
       bmi: 32.0,
       a1c_current_percent: 8.6,
       a1c_target_percent: 7.0,
       no_a1c_goal: false,
+      random_glucose_mg_dl: null,
       fasting_glucose_mg_dl: 150,
       postprandial_glucose_mg_dl: 210,
       symptomatic_hyperglycemia: false,
@@ -389,11 +397,14 @@
       diabetes_type_gestational: false,
       diabetes_type_other: false,
       patient_age_years: 64,
+      patient_sex: "unknown",
       is_pregnant_or_planning: false,
+      weight_kg: null,
       bmi: 34.2,
       a1c_current_percent: 10.8,
       a1c_target_percent: 7.0,
       no_a1c_goal: false,
+      random_glucose_mg_dl: 325,
       fasting_glucose_mg_dl: 188,
       postprandial_glucose_mg_dl: 325,
       symptomatic_hyperglycemia: true,
@@ -742,6 +753,8 @@
     const dom = {
       pageShell: document.querySelector(".page-shell"),
       demoBtn: document.getElementById("demo-btn"),
+      ehrUploadInput: document.getElementById("ehr-upload-input"),
+      ehrUploadStatus: document.getElementById("ehr-upload-status"),
       jumpToResultsTopBtn: document.getElementById("jump-to-results-top"),
       backToQuestionsBtn: document.getElementById("back-to-questions-btn"),
       resetBtn: document.getElementById("reset-btn"),
@@ -771,8 +784,12 @@
       preferredCount: document.getElementById("preferred-count"),
       acceptableCount: document.getElementById("acceptable-count"),
       avoidCount: document.getElementById("avoid-count"),
+      dataCompletenessSummary: document.getElementById("data-completeness-summary"),
       rationaleRow: document.getElementById("rationale-row"),
       flagRow: document.getElementById("flag-row"),
+      clinicalInsightList: document.getElementById("clinical-insight-list"),
+      dataQualityList: document.getElementById("data-quality-list"),
+      patientEvidenceGrid: document.getElementById("patient-evidence-grid"),
       compareLeft: document.getElementById("compare-left"),
       compareRight: document.getElementById("compare-right"),
       compareLeftCard: document.getElementById("compare-left-card"),
@@ -784,6 +801,8 @@
 
     const groupedDrugs = groupDrugsByClass(DRUG_DATA.drugs);
     const QUESTION_LOOKUP = Object.fromEntries(QUESTION_FLOW.map((question) => [question.id, question]));
+    const SAMPLE_EHR_PROFILE = createEhrProfile(PATIENT_DATA, "patientData.json");
+    let activeEhrProfile = SAMPLE_EHR_PROFILE;
     let compareState = { left: "", right: "" };
     let latestState = { ...DEFAULT_STATE };
     let latestResult = null;
@@ -796,15 +815,23 @@
 
     bindStaticEvents();
     clearStoredState();
-    hydrateSession(createFreshSession(DEFAULT_STATE));
+    updateUploadStatus("Sample EHR loaded", "ok");
+    hydrateSession(createCompletedSession(activeEhrProfile.state));
+    switchTab("tab-results");
     showDisclaimerModal();
 
     function bindStaticEvents() {
       dom.demoBtn.addEventListener("click", () => {
-        hydrateSession(createCompletedSession(DEMO_STATE));
+        activeEhrProfile = SAMPLE_EHR_PROFILE;
+        updateUploadStatus("Sample EHR loaded", "ok");
+        hydrateSession(createCompletedSession(activeEhrProfile.state));
         switchTab("tab-results");
       });
-      dom.resetBtn.addEventListener("click", () => hydrateSession(createFreshSession(DEFAULT_STATE)));
+      dom.resetBtn.addEventListener("click", () => {
+        hydrateSession(createFreshSession(activeEhrProfile.state));
+        switchTab("tab-intake");
+      });
+      dom.ehrUploadInput?.addEventListener("change", handleEhrUpload);
       dom.jumpToResultsTopBtn.addEventListener("click", () => switchTab("tab-results"));
       dom.backToQuestionsBtn.addEventListener("click", () => switchTab("tab-intake"));
       dom.backQuestionBtn.addEventListener("click", goToPreviousQuestion);
@@ -899,6 +926,42 @@
           renderCompareCards(latestResult, latestState);
         }
       });
+    }
+
+    async function handleEhrUpload(event) {
+      const file = event.target.files?.[0];
+      if (!file) {
+        return;
+      }
+
+      try {
+        updateUploadStatus(`Reading ${file.name}...`, "");
+        const text = await file.text();
+        const uploadedData = JSON.parse(text);
+        activeEhrProfile = createEhrProfile(uploadedData, file.name);
+        compareState = { left: "", right: "" };
+        hydrateSession(createCompletedSession(activeEhrProfile.state));
+        switchTab("tab-results");
+        updateUploadStatus(`Loaded ${file.name}`, "ok");
+      } catch (error) {
+        console.error("Unable to import EHR JSON.", error);
+        updateUploadStatus("Upload failed: invalid EHR JSON", "error");
+      } finally {
+        event.target.value = "";
+      }
+    }
+
+    function updateUploadStatus(message, tone) {
+      if (!dom.ehrUploadStatus) {
+        return;
+      }
+
+      dom.ehrUploadStatus.textContent = message;
+      if (tone) {
+        dom.ehrUploadStatus.dataset.tone = tone;
+      } else {
+        delete dom.ehrUploadStatus.dataset.tone;
+      }
     }
 
     function handleQuestionJumpClick(event) {
@@ -1036,6 +1099,165 @@
       };
     }
 
+    function createEhrProfile(patientData, sourceLabel = "EHR JSON") {
+      const quality = {
+        status: "complete",
+        missing: [],
+        outdated: [],
+        conflicts: [],
+        meta: patientData?.meta || {}
+      };
+      const state = {
+        ...DEFAULT_STATE,
+        diabetes_type_T1DM: false,
+        diabetes_type_T2DM: false,
+        diabetes_type_gestational: false,
+        diabetes_type_other: false
+      };
+      const demographics = patientData?.demographics || {};
+      const conditions = patientData?.conditions || {};
+      const labs = patientData?.labs || {};
+      const heartFailure = conditions.heart_failure || {};
+      const ckd = conditions.ckd || {};
+      const vitals = patientData?.vitals || {};
+      const preferences = patientData?.preferences || {};
+      const safety = patientData?.safety || {};
+      const goals = patientData?.goals || {};
+
+      const diabetesKeys = getDiabetesTypeKeys(conditions.diabetes_type);
+      if (conditions.t1dm || conditions.type1) diabetesKeys.add("diabetes_type_T1DM");
+      if (conditions.t2dm || conditions.type2) diabetesKeys.add("diabetes_type_T2DM");
+      if (conditions.gestational_diabetes) diabetesKeys.add("diabetes_type_gestational");
+
+      if (!diabetesKeys.size) {
+        addQualityIssue(quality.missing, "Diabetes diagnosis", "No structured diabetes type was found.", true);
+      } else {
+        diabetesKeys.forEach((key) => {
+          state[key] = true;
+        });
+      }
+
+      const age = firstNumeric(demographics.age);
+      if (age === null) {
+        addQualityIssue(quality.missing, "Age", "Demographic age is required for individualized targets.", true);
+      } else {
+        state.patient_age_years = age;
+      }
+
+      if (demographics.sex) {
+        state.patient_sex = demographics.sex;
+      } else {
+        addQualityIssue(quality.missing, "Sex", "Sex was not present in the EHR extract.", false);
+      }
+
+      const a1cValue = firstNumeric(labs.a1c?.value);
+      if (a1cValue === null) {
+        addQualityIssue(quality.missing, "A1C", "No recent A1C value was available.", true);
+      } else {
+        state.a1c_current_percent = a1cValue;
+      }
+      validateLabFreshness(quality, "A1C", labs.a1c?.date, 180);
+
+      const targetA1c = firstNumeric(goals.a1c_target);
+      if (targetA1c !== null) {
+        state.a1c_target_percent = targetA1c;
+        state.no_a1c_goal = false;
+      }
+
+      const randomGlucose = firstNumeric(labs.random_glucose?.value);
+      if (randomGlucose === null) {
+        addQualityIssue(quality.missing, "Random glucose", "No random glucose value was available.", false);
+      } else {
+        state.random_glucose_mg_dl = randomGlucose;
+      }
+      validateLabFreshness(quality, "Random glucose", labs.random_glucose?.date, 30);
+
+      state.symptomatic_hyperglycemia = Boolean(patientData?.symptoms?.hyperglycemia_symptoms);
+      state.catabolic_features_present = Boolean(patientData?.symptoms?.catabolic_features);
+
+      state.has_ASCVD_or_high_risk = Boolean(conditions.ascvd || conditions.high_ascvd_risk);
+      state.has_established_ASCVD = Boolean(conditions.ascvd);
+      state.has_indicators_high_CVD_risk = Boolean(conditions.high_ascvd_risk || conditions.ascvd);
+
+      state.has_HF = Boolean(heartFailure.present || conditions.hf);
+      if (state.has_HF) {
+        state.HF_type = heartFailure.type || "NA";
+        state.HF_symptomatic = Boolean(heartFailure.symptomatic);
+        if (!heartFailure.type) {
+          addQualityIssue(quality.conflicts, "Heart failure type", "HF is listed, but no HF type is documented.", false);
+        }
+      }
+
+      const egfr = firstNumeric(labs.egfr?.value, ckd.egfr);
+      if (egfr === null) {
+        addQualityIssue(quality.missing, "eGFR", "Renal function is required for CKD and medication safety logic.", true);
+      } else {
+        state.egfr_ml_min_1_73m2 = egfr;
+      }
+      validateLabFreshness(quality, "eGFR", labs.egfr?.date, 180);
+
+      const uacr = firstNumeric(labs.uacr?.value);
+      if (ckd.albuminuria !== undefined) {
+        state.albuminuria_present = Boolean(ckd.albuminuria);
+      } else if (uacr !== null) {
+        state.albuminuria_present = uacr >= 30;
+      } else {
+        addQualityIssue(quality.missing, "Albuminuria status", "UACR or albuminuria flag was not available.", false);
+      }
+      validateLabFreshness(quality, "UACR", labs.uacr?.date, 365);
+
+      const bmi = firstNumeric(vitals.bmi);
+      if (bmi === null) {
+        addQualityIssue(quality.missing, "BMI", "BMI was not available for weight-related prioritization.", false);
+      } else {
+        state.bmi = bmi;
+      }
+
+      const weight = firstNumeric(vitals.weight_kg);
+      if (weight !== null) {
+        state.weight_kg = weight;
+      }
+
+      state.has_obesity = Boolean(conditions.obesity) || state.bmi >= 30;
+      state.weight_loss_goal_priority = Boolean(goals.weight_loss_goal);
+      state.prioritize_weight_loss = Boolean(goals.weight_loss_goal);
+
+      if (conditions.mash) {
+        state.liver_condition = "MASH";
+        state.has_MASH = true;
+        state.has_MASLD = true;
+      } else if (conditions.high_liver_fibrosis_risk) {
+        state.liver_condition = "high_fibrosis_risk";
+        state.high_risk_liver_fibrosis = true;
+      } else if (conditions.masld) {
+        state.liver_condition = "MASLD";
+        state.has_MASLD = true;
+      }
+
+      applyCurrentMedicationFlags(state, patientData?.medications);
+      applyContraindicationFlags(state, safety.contraindications);
+
+      state.high_hypoglycemia_risk = Boolean(safety.high_hypoglycemia_risk);
+      state.prioritize_hypoglycemia_avoidance = Boolean(preferences.hypoglycemia_priority);
+      state.cost_barrier_present = preferences.cost_sensitivity === "high";
+
+      if (preferences.route_preference === "oral_only") {
+        state.prefers_oral_only = true;
+        state.willing_to_use_injection = false;
+      } else if (preferences.route_preference === "open_to_injectable") {
+        state.prefers_oral_only = false;
+        state.willing_to_use_injection = true;
+      }
+
+      const normalizedState = normalizeState(state);
+      return {
+        raw: patientData || {},
+        sourceLabel,
+        state: normalizedState,
+        quality: finalizeDataQuality(quality)
+      };
+    }
+
     function normalizeState(state) {
       const nextState = { ...DEFAULT_STATE, ...state };
       const hasAnyDiabetesType = DIABETES_TYPE_OPTIONS.some((option) => Boolean(nextState[option.key]));
@@ -1053,10 +1275,17 @@
       }
 
       nextState.patient_age_years = clamp(toInteger(nextState.patient_age_years, DEFAULT_STATE.patient_age_years), 19, 99);
+      nextState.patient_sex = String(nextState.patient_sex || "unknown");
+      nextState.weight_kg = nextState.weight_kg === null || nextState.weight_kg === undefined || nextState.weight_kg === ""
+        ? null
+        : clamp(toNumber(nextState.weight_kg, DEFAULT_STATE.weight_kg ?? 0), 20, 400);
+      nextState.random_glucose_mg_dl = nextState.random_glucose_mg_dl === null ||
+        nextState.random_glucose_mg_dl === undefined ||
+        nextState.random_glucose_mg_dl === ""
+        ? null
+        : clamp(toNumber(nextState.random_glucose_mg_dl, 0), 40, 1000);
       nextState.bmi = clamp(toNumber(nextState.bmi, DEFAULT_STATE.bmi), 10, 80);
       nextState.has_obesity = nextState.bmi >= 30;
-      nextState.weight_loss_goal_priority = false;
-      nextState.prioritize_weight_loss = false;
 
       if (nextState.liver_condition === "MASH") {
         nextState.has_MASH = true;
@@ -1294,7 +1523,9 @@
       persistState();
       renderApplication(latestState);
 
-      if (!wasUnlocked && wizardSession.currentQuestionId === null && latestResult?.status === "ok") {
+      if (wizardSession.currentQuestionId === null &&
+          latestResult?.status === "ok" &&
+          areAllVisibleQuestionsAnswered(latestState)) {
         switchTab("tab-results");
       }
     }
@@ -1363,6 +1594,9 @@
       renderLane("avoid", result.avoid_classes, dom.avoidGrid, state);
       renderRationale(result);
       renderFlags(result);
+      renderClinicalInsights(result, state);
+      renderDataQuality(activeEhrProfile);
+      renderPatientEvidence(state, activeEhrProfile);
       buildCompareSelectors(result, state);
       renderCompareCards(result, state);
       queueCenteredActiveStep();
@@ -1462,14 +1696,14 @@
 
     function renderResultAccessState(isUnlocked) {
       if (dom.jumpToResultsTopBtn) {
-        dom.jumpToResultsTopBtn.disabled = !isUnlocked;
-        dom.jumpToResultsTopBtn.title = isUnlocked ? "" : "Complete all questions to unlock recommendations.";
+        dom.jumpToResultsTopBtn.disabled = false;
+        dom.jumpToResultsTopBtn.title = "Open the current recommendation board.";
       }
 
       if (dom.resultsTabButton) {
-        dom.resultsTabButton.disabled = !isUnlocked;
-        dom.resultsTabButton.setAttribute("aria-disabled", String(!isUnlocked));
-        dom.resultsTabButton.title = isUnlocked ? "" : "Complete all questions to unlock recommendations.";
+        dom.resultsTabButton.disabled = false;
+        dom.resultsTabButton.setAttribute("aria-disabled", "false");
+        dom.resultsTabButton.title = "Open the current recommendation board.";
       }
     }
 
@@ -1652,7 +1886,7 @@
     }
 
     function isResultsUnlocked(state = latestState) {
-      return areAllVisibleQuestionsAnswered(state);
+      return true;
     }
 
     function renderFlowchart(state, result, currentQuestion) {
@@ -2070,6 +2304,7 @@
         has_CKD,
         advanced_CKD,
         SGLT2_low_glycemic_effect,
+        marked_random_glucose_elevation: Number.isFinite(inputs.random_glucose_mg_dl) && inputs.random_glucose_mg_dl >= 300,
         marked_fasting_glucose_elevation: inputs.fasting_glucose_mg_dl >= 250,
         marked_postprandial_glucose_elevation: inputs.postprandial_glucose_mg_dl >= 300,
         scopeDevelopmentMessage
@@ -2141,6 +2376,7 @@
       const availableDrugs = drugs.filter((drug) => getDrugConflicts(drug, state).length === 0);
       const routeSummary = summariseValueList(drugs.map((drug) => prettifyValue(drug.route)));
       const costSummary = summariseValueList(drugs.map((drug) => prettifyValue(drug.rough_cost_level)));
+      const justification = getClassPatientJustification(classId, lane, state, latestResult);
 
       return `
         <article class="class-card">
@@ -2158,6 +2394,10 @@
             <span class="pill neutral">Route: ${routeSummary}</span>
             <span class="pill neutral">Cost: ${costSummary}</span>
             <span class="pill neutral">${availableDrugs.length}/${drugs.length} example drugs clear profile conflicts</span>
+          </div>
+          <div class="class-justification">
+            <strong>Patient-specific rationale</strong>
+            <p>${justification}</p>
           </div>
           <ul class="class-list">
             ${drugs.map((drug) => {
@@ -2196,6 +2436,7 @@
       }
       if (derived.above_a1c_goal) flags.push("Above A1C goal");
       if (derived.severe_hyperglycemia) flags.push("Severe hyperglycemia");
+      if (derived.marked_random_glucose_elevation) flags.push("Marked random glucose elevation");
       if (derived.marked_fasting_glucose_elevation) flags.push("Marked fasting glucose elevation");
       if (derived.marked_postprandial_glucose_elevation) flags.push("Marked postprandial glucose elevation");
       if (derived.has_cardiorenal_driver) flags.push("Cardiorenal driver present");
@@ -2206,6 +2447,226 @@
       dom.flagRow.innerHTML = flags.length
         ? flags.map((item) => `<span class="pill neutral">${item}</span>`).join("")
         : `<span class="pill neutral">No derived flags triggered yet</span>`;
+    }
+
+    function renderClinicalInsights(result, state) {
+      const insights = buildClinicalInsights(result, state);
+
+      dom.clinicalInsightList.innerHTML = insights.length
+        ? insights.map((insight) => `
+          <div class="clinical-insight">
+            <strong>${escapeHtml(insight.title)}</strong>
+            ${escapeHtml(insight.detail)}
+          </div>
+        `).join("")
+        : `<div class="clinical-insight"><strong>No urgent insights</strong>No high-priority insight is triggered by the current profile.</div>`;
+    }
+
+    function renderDataQuality(profile) {
+      const quality = profile.quality;
+      const status = quality.status || "partial";
+      const statusLabel = titleCase(status);
+
+      if (dom.dataCompletenessSummary) {
+        dom.dataCompletenessSummary.textContent = statusLabel;
+        dom.dataCompletenessSummary.dataset.status = status;
+      }
+
+      const issues = [
+        ...quality.missing.map((item) => ({ ...item, category: "Missing data", tone: item.critical ? "danger" : "warning" })),
+        ...quality.outdated.map((item) => ({ ...item, category: "Outdated lab", tone: "warning" })),
+        ...quality.conflicts.map((item) => ({ ...item, category: "Conflicting data", tone: "danger" }))
+      ];
+
+      if (!issues.length) {
+        dom.dataQualityList.innerHTML = `
+          <div class="data-quality-item">
+            <strong>Complete</strong>
+            Required demographics, diagnoses, medications, vitals, and labs were available in ${escapeHtml(profile.sourceLabel || "the EHR extract")}.
+          </div>
+        `;
+        return;
+      }
+
+      dom.dataQualityList.innerHTML = `
+        <div class="data-quality-item">
+          <strong>Source</strong>
+          ${escapeHtml(profile.sourceLabel || "Uploaded EHR JSON")}
+        </div>
+        ${issues.map((issue) => `
+        <div class="data-quality-item" data-tone="${issue.tone}">
+          <strong>${escapeHtml(issue.category)}</strong>
+          ${escapeHtml(issue.label)}${issue.detail ? `: ${escapeHtml(issue.detail)}` : ""}
+        </div>
+      `).join("")}
+      `;
+    }
+
+    function renderPatientEvidence(state, profile) {
+      const evidence = buildPatientEvidence(state, profile.raw);
+
+      dom.patientEvidenceGrid.innerHTML = evidence.map((item) => `
+        <div class="patient-evidence-item">
+          <strong>${escapeHtml(item.label)}</strong>
+          ${escapeHtml(item.value)}
+        </div>
+      `).join("");
+    }
+
+    function buildClinicalInsights(result, state) {
+      const derived = result.derived_flags || {};
+      const insights = [];
+
+      if (derived.severe_hyperglycemia) {
+        insights.push({
+          title: "Patient meets criteria for insulin initiation",
+          detail: "A1C is at least 10%, symptomatic hyperglycemia is present, or catabolic features were detected."
+        });
+      }
+
+      if (state.has_HF || derived.has_CKD) {
+        const drivers = [];
+        if (state.has_HF) drivers.push("HF");
+        if (derived.has_CKD) drivers.push("CKD");
+        insights.push({
+          title: "SGLT2 inhibitor indicated due to HF/CKD",
+          detail: `${drivers.join(" and ")} present in the EHR-mapped profile.`
+        });
+      }
+
+      if (state.high_hypoglycemia_risk || state.prioritize_hypoglycemia_avoidance) {
+        insights.push({
+          title: "High hypoglycemia risk detected",
+          detail: "The recommendation logic prioritizes lower-hypoglycemia classes and de-emphasizes sulfonylurea or insulin when possible."
+        });
+      }
+
+      if (state.has_established_ASCVD || state.has_indicators_high_CVD_risk) {
+        insights.push({
+          title: "ASCVD/high-risk branch active",
+          detail: "GLP-1 RA and SGLT2 inhibitor classes are prioritized for cardiorenal benefit."
+        });
+      }
+
+      return insights;
+    }
+
+    function buildPatientEvidence(state, data) {
+      const labs = data?.labs || {};
+      const conditions = data?.conditions || {};
+      const heartFailure = conditions.heart_failure || {};
+      const ckd = conditions.ckd || {};
+      const currentMedications = data?.medications?.current_drugs?.length
+        ? data.medications.current_drugs
+            .map((drug) => `${titleCase(drug.name)} ${drug.dose || ""} ${drug.frequency || ""}`.trim())
+            .join(", ")
+        : summariseValueList(data?.medications?.current_classes || []);
+
+      const diabetesTypes = DIABETES_TYPE_OPTIONS
+        .filter((option) => state[option.key])
+        .map((option) => option.label)
+        .join(", ") || "Not documented";
+
+      return [
+        {
+          label: "Demographics",
+          value: `${state.patient_age_years} years, ${prettifyValue(state.patient_sex)}`
+        },
+        {
+          label: "Diabetes diagnosis",
+          value: diabetesTypes
+        },
+        {
+          label: "A1C",
+          value: formatLabEvidence(labs.a1c, "%", state.a1c_current_percent)
+        },
+        {
+          label: "Random glucose",
+          value: formatLabEvidence(labs.random_glucose, "mg/dL", state.random_glucose_mg_dl)
+        },
+        {
+          label: "ASCVD",
+          value: state.has_ASCVD_or_high_risk ? "Present or high risk" : "Not documented"
+        },
+        {
+          label: "Heart failure",
+          value: state.has_HF
+            ? `${heartFailure.type || state.HF_type || "Type not specified"}${state.HF_symptomatic ? ", symptomatic" : ""}`
+            : "Not documented"
+        },
+        {
+          label: "Kidney function",
+          value: `eGFR ${formatLabEvidence(labs.egfr, "mL/min/1.73 m2", state.egfr_ml_min_1_73m2)}`
+        },
+        {
+          label: "Albuminuria",
+          value: state.albuminuria_present
+            ? `Present${labs.uacr?.value ? `, UACR ${formatLabEvidence(labs.uacr, labs.uacr.unit || "mg/g", labs.uacr.value)}` : ""}`
+            : "Not documented"
+        },
+        {
+          label: "Weight/BMI",
+          value: `${state.weight_kg ? `${state.weight_kg} kg, ` : ""}BMI ${state.bmi}`
+        },
+        {
+          label: "Current therapy",
+          value: currentMedications || "No active glucose-lowering medication documented"
+        }
+      ];
+    }
+
+    function getClassPatientJustification(classId, lane, state, result) {
+      const derived = result?.derived_flags || {};
+      const details = [];
+
+      if (classId === "basal_insulin" && derived.severe_hyperglycemia) {
+        details.push(`Meets urgent glycemic criteria with A1C ${state.a1c_current_percent}%${state.symptomatic_hyperglycemia ? " and symptoms" : ""}.`);
+      }
+
+      if (classId === "SGLT2i") {
+        if (state.has_HF) details.push(`Heart failure is documented${state.HF_type !== "NA" ? ` (${state.HF_type})` : ""}.`);
+        if (derived.has_CKD) details.push(`CKD/albuminuria branch is active with eGFR ${state.egfr_ml_min_1_73m2}.`);
+        if (state.has_ASCVD_or_high_risk) details.push("ASCVD/high cardiovascular risk is present.");
+      }
+
+      if (classId === "GLP1_RA") {
+        if (state.has_ASCVD_or_high_risk) details.push("ASCVD/high cardiovascular risk is present.");
+        if (state.has_MASH || state.high_risk_liver_fibrosis) details.push("MASH or high liver fibrosis risk is documented.");
+        if (derived.has_CKD) details.push("CKD branch makes GLP-1 RA a reasonable cardiorenal alternative.");
+      }
+
+      if (classId === "dual_GIP_GLP1_RA") {
+        if (state.has_obesity || state.weight_loss_goal_priority || state.prioritize_weight_loss) {
+          details.push(`Weight/metabolic branch is active with BMI ${state.bmi}.`);
+        }
+        if (derived.a1c_gap !== null && derived.a1c_gap >= 1.5) {
+          details.push(`A1C is ${formatGap(derived.a1c_gap)}% above target.`);
+        }
+      }
+
+      if (classId === "metformin") {
+        if (derived.above_a1c_goal) details.push(`A1C ${state.a1c_current_percent}% remains above target.`);
+        details.push("Foundational oral therapy remains available unless already used or contraindicated.");
+      }
+
+      if (classId === "pioglitazone") {
+        if (state.has_MASLD || state.has_MASH) details.push("Liver/metabolic branch supports considering pioglitazone as an alternative.");
+        if (state.cost_barrier_present || state.prefers_oral_only) details.push("Oral lower-cost fallback logic is active.");
+      }
+
+      if (classId === "DPP4i") {
+        details.push("Oral, weight-neutral fallback when GLP-1-based therapy is not already active.");
+      }
+
+      if (classId === "sulfonylurea") {
+        details.push("Lower-cost fallback only when hypoglycemia risk does not dominate the profile.");
+      }
+
+      if (!details.length) {
+        details.push(`${titleCase(lane)} lane after contraindications, current therapies, and cleanup rules were applied.`);
+      }
+
+      return details.slice(0, 2).join(" ");
     }
 
     function buildCompareSelectors(result, state) {
@@ -2444,6 +2905,207 @@
       return labels[flag] || titleCase(flag.replaceAll("_", " "));
     }
 
+    function getDiabetesTypeKeys(value) {
+      const values = Array.isArray(value) ? value : [value];
+      const selected = new Set();
+
+      values
+        .filter((item) => item !== undefined && item !== null && item !== "")
+        .forEach((item) => {
+          const text = String(item).toLowerCase();
+          if (text.includes("t1dm") || text.includes("type 1")) {
+            selected.add("diabetes_type_T1DM");
+          } else if (text.includes("t2dm") || text.includes("type 2")) {
+            selected.add("diabetes_type_T2DM");
+          } else if (text.includes("gestational")) {
+            selected.add("diabetes_type_gestational");
+          } else {
+            selected.add("diabetes_type_other");
+          }
+        });
+
+      return selected;
+    }
+
+    function applyCurrentMedicationFlags(state, medications = {}) {
+      const classes = Array.isArray(medications?.current_classes) ? medications.current_classes : [];
+      const drugs = Array.isArray(medications?.current_drugs) ? medications.current_drugs : [];
+      const values = [
+        ...classes,
+        ...drugs.map((drug) => drug?.name)
+      ];
+
+      values.forEach((value) => {
+        const classId = normalizeMedicationClassId(value);
+        const key = {
+          metformin: "on_metformin",
+          SGLT2i: "on_SGLT2i",
+          GLP1_RA: "on_GLP1_RA",
+          dual_GIP_GLP1_RA: "on_dual_GIP_GLP1_RA",
+          DPP4i: "on_DPP4i",
+          sulfonylurea: "on_sulfonylurea",
+          basal_insulin: "on_basal_insulin"
+        }[classId];
+
+        if (key) {
+          state[key] = true;
+        }
+      });
+    }
+
+    function applyContraindicationFlags(state, contraindications = []) {
+      if (!Array.isArray(contraindications)) {
+        return;
+      }
+
+      contraindications.forEach((value) => {
+        const classId = normalizeMedicationClassId(value);
+        const key = {
+          metformin: "metformin_contraindicated",
+          SGLT2i: "SGLT2i_contraindicated",
+          GLP1_RA: "GLP1_RA_contraindicated",
+          dual_GIP_GLP1_RA: "dual_GIP_GLP1_RA_contraindicated",
+          pioglitazone: "pioglitazone_contraindicated",
+          DPP4i: "dpp4i_contraindicated",
+          sulfonylurea: "sulfonylurea_contraindicated",
+          basal_insulin: "basal_insulin_contraindicated"
+        }[classId];
+
+        if (key) {
+          state[key] = true;
+        }
+      });
+    }
+
+    function normalizeMedicationClassId(value) {
+      const text = String(value || "").toLowerCase();
+
+      if (text.includes("dual") || text.includes("tirzepatide") || text.includes("gip")) return "dual_GIP_GLP1_RA";
+      if (text.includes("glp")) return "GLP1_RA";
+      if (text.includes("sglt2")) return "SGLT2i";
+      if (text.includes("dpp")) return "DPP4i";
+      if (text.includes("sulfonylurea") || text.includes("glipizide") || text.includes("glyburide") || text.includes("glimepiride")) return "sulfonylurea";
+      if (text.includes("insulin")) return "basal_insulin";
+      if (text.includes("pioglitazone") || text.includes("thiazolidinedione")) return "pioglitazone";
+      if (text.includes("metformin")) return "metformin";
+      return "";
+    }
+
+    function addQualityIssue(collection, label, detail, critical = false) {
+      collection.push({ label, detail, critical });
+    }
+
+    function validateLabFreshness(quality, label, dateString, maxAgeDays) {
+      if (!dateString) {
+        addQualityIssue(quality.missing, `${label} date`, "No collection date was available.", false);
+        return;
+      }
+
+      const ageDays = getDateAgeInDays(dateString);
+      if (ageDays === null) {
+        addQualityIssue(quality.conflicts, `${label} date`, "The collection date could not be parsed.", false);
+        return;
+      }
+
+      if (ageDays > maxAgeDays) {
+        addQualityIssue(
+          quality.outdated,
+          label,
+          `${formatIsoDate(dateString)} is ${ageDays} days old; expected within ${maxAgeDays} days.`,
+          false
+        );
+      }
+    }
+
+    function finalizeDataQuality(quality) {
+      const hasCriticalMissing = quality.missing.some((item) => item.critical);
+      const hasAnyIssue = quality.missing.length || quality.outdated.length || quality.conflicts.length;
+      const metaStatus = String(quality.meta?.data_completeness || "").toLowerCase();
+
+      if (hasCriticalMissing) {
+        quality.status = "insufficient";
+      } else if (hasAnyIssue || metaStatus === "partial") {
+        quality.status = "partial";
+      } else {
+        quality.status = "complete";
+      }
+
+      return quality;
+    }
+
+    function firstNumeric(...values) {
+      for (const value of values) {
+        if (value === undefined || value === null || value === "") {
+          continue;
+        }
+
+        const parsed = Number(value);
+        if (Number.isFinite(parsed)) {
+          return parsed;
+        }
+      }
+
+      return null;
+    }
+
+    function getDateAgeInDays(dateString) {
+      const date = parseDateValue(dateString);
+      if (!date) {
+        return null;
+      }
+
+      return Math.max(0, Math.floor((Date.now() - date.getTime()) / 86400000));
+    }
+
+    function formatIsoDate(dateString) {
+      const date = parseDateValue(dateString);
+      if (!date) {
+        return "date unavailable";
+      }
+
+      return date.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      });
+    }
+
+    function parseDateValue(dateString) {
+      if (!dateString) {
+        return null;
+      }
+
+      const dateOnlyMatch = String(dateString).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (dateOnlyMatch) {
+        const [, year, month, day] = dateOnlyMatch;
+        return new Date(Number(year), Number(month) - 1, Number(day), 12);
+      }
+
+      const timestamp = Date.parse(dateString);
+      return Number.isFinite(timestamp) ? new Date(timestamp) : null;
+    }
+
+    function formatLabEvidence(lab, unit, fallbackValue) {
+      const value = firstNumeric(lab?.value, fallbackValue);
+      if (value === null) {
+        return "Not documented";
+      }
+
+      const unitLabel = unit || lab?.unit || "";
+      const separator = unitLabel === "%" ? "" : " ";
+      const dateLabel = lab?.date ? ` (${formatIsoDate(lab.date)})` : "";
+      return `${value}${unitLabel ? `${separator}${unitLabel}` : ""}${dateLabel}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\"", "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
     function addUnique(list, item) {
       if (item && !list.includes(item)) {
         list.push(item);
@@ -2588,6 +3250,23 @@
       return data;
     }
 
+    async function loadPatientData() {
+      const jsonUrl = new URL("./patientData.json", import.meta.url);
+      const response = await fetch(jsonUrl);
+
+      if (!response.ok) {
+        throw new Error(`Unable to load patient data: ${response.status} ${response.statusText}`.trim());
+      }
+
+      const data = await response.json();
+
+      if (!data) {
+        throw new Error("patientData.json is invalid.");
+      }
+
+      return data;
+    }
+
     function showInitializationError(error) {
       console.error("Unable to initialize drug recommendation app.", error);
 
@@ -2595,7 +3274,7 @@
         ? " This browser may block local JSON requests from file:// pages, so opening the folder with a small local web server is more reliable."
         : "";
 
-      const message = `The app could not load Drugs.json.${protocolHint}`;
+      const message = `The app could not load the local drug catalog or EHR patient data.${protocolHint}`;
       const statusBanner = document.getElementById("status-banner");
       const wizardStageLabel = document.getElementById("wizard-stage-label");
       const wizardProgressCopy = document.getElementById("wizard-progress-copy");
@@ -2605,7 +3284,7 @@
       const questionInputArea = document.getElementById("question-input-area");
 
       if (wizardStageLabel) {
-        wizardStageLabel.textContent = "Drug data unavailable";
+        wizardStageLabel.textContent = "Clinical data unavailable";
       }
 
       if (wizardProgressCopy) {
@@ -2631,8 +3310,8 @@
       if (statusBanner) {
         statusBanner.dataset.tone = "danger";
         statusBanner.innerHTML = `
-          <strong>Medication catalog unavailable</strong>
-          <p>${message}</p>
+            <strong>Clinical data unavailable</strong>
+            <p>${message}</p>
         `;
       }
     }
